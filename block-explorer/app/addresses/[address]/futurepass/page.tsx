@@ -40,10 +40,10 @@ export default async function Page({ params, searchParams }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {futurepasses.map((futurepass, _) => {
-              const futurepassAddress = futurepass?.events?.[0]?.futurepass
+            {futurepasses.map((item, _) => {
+              const futurepassAddress = item?.args?.futurepass
               return (
-                <TableRow key={futurepass._id}>
+                <TableRow key={item._id}>
                   <TableCell>
                     <AddressDisplay address={futurepassAddress} />
                   </TableCell>
