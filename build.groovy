@@ -155,8 +155,7 @@ pipeline {
                 stage('prod') {
                     when {
                         anyOf {
-                            // TODO: change to prod branch later
-                            branch 'dev'
+                            branch 'prod'
                         }
                     }
                     steps {
