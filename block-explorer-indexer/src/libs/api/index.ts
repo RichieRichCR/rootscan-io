@@ -420,7 +420,7 @@ app.post('/getNativeTransfersForAddress', async (req: Request, res: Response) =>
       sort: '-blockNumber',
       skipFullCount: true,
       allowDiskUse: true,
-      populate: 'extrinsicData token nftCollection',
+      populate: 'extrinsicData tokenNative nftCollection',
       lean: true
     };
 
