@@ -89,7 +89,12 @@ const logos: { [key: number]: { [key: Address]: string } } = {
     "0xCcCcCccc00016864000000000000000000000000": "token-rootgames.png",
     "0xCcccCccC00018064000000000000000000000000": "token-30mm.png",
     //Prysm
-    "0xCCcccccc0001A064000000000000000000000000": "token-prysm.png"
+    "0xCCcccccc0001A064000000000000000000000000": "token-prysm.png",
+
+    //RichieRich Collection / Prawn Tokens
+    "0xAAaaaAaa00002864000000000000000000000000": "token-richie-rich.png",
+    "0xCCccCcCC00014C64000000000000000000000000": "token-prawn.png",
+    "0xcCcCCCcc00015064000000000000000000000000": "token-king-prawn.png"
   },
   7672: {
     // Root
