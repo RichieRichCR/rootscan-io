@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import moment from 'moment';
 import { Address, Hash, formatUnits, getAddress } from 'viem';
 import { processError } from './utils';
+import { FilterQuery } from 'mongoose';
 const app = express();
 
 /** @dev Middlewares */
@@ -56,33 +57,37 @@ app.post('/getEvents', async (req: Request, res: Response) => {
   try {
     const { page, limit, query }: { page: number; limit: number; query: Record<string, unknown> } = req.body;
 
-    const regex = /^\d{10}-\d{6}-[0-9a-f]{5}$/gm; // regular expression to check extrinsic ID format
+    const filter: FilterQuery<IEvent> = {}
 
-    let extrinsicId = query?.extrinsicId;
-
-    // filter events by retroExtrinsicId - get extrinsicId firstly
-    if (extrinsicId && regex.test(String(extrinsicId))) {
-      const extrinsic: IExtrinsic | null = await DB.Extrinsic.findOne({ retroExtrinsicId: String(extrinsicId) }).lean();
-
-      if (extrinsic) {
-        extrinsicId = extrinsic.extrinsicId;
-      } else {
-        return res.status(404).json({
-          message: 'Extrinsic not found',
-          extrinsicId: extrinsicId
-        });
+    if (query?.extrinsicId) {
+      filter.extrinsicId = query.extrinsicId
+      // if sent retroExtrinsicId (0011766360-000001-2d9a4) - get real extrinsicId from retroExtrinsicId
+      if (/^\d{10}-\d{6}-[0-9a-f]{5}$/gm.test(String(filter.extrinsicId))) {
+        const extrinsic: IExtrinsic | null = await DB.Extrinsic.findOne({ retroExtrinsicId: String(filter.extrinsicId) }).lean();
+        filter.extrinsicId = extrinsic?.extrinsicId || filter.extrinsicId;
       }
     }
-    const options = {
+
+    if (query?.blockNumber && !isNaN(+query?.blockNumber)) {
+      filter.blockNumber = Number(query.blockNumber);
+    }
+
+    const options: Record<string, unknown> = {
       page: page ? Number(page) : 1,
       limit: limit ? limit : 25,
-      sort: '-blockNumber eventId',
+      sort: '-blockNumber',
       allowDiskUse: true,
       skipFullCount: true,
       lean: true,
-      collation: { locale: 'en', numericOrdering: true }
     };
-    const data = await DB.Event.paginate(extrinsicId ? { extrinsicId: extrinsicId } : {}, options);
+
+    // if filter by blockNumber or extrinsicId sort only by eventId
+    if ( Object.keys(filter).length) {
+      options.sort = 'eventId';
+      options.collation = { locale: 'en', numericOrdering: true };
+    }
+
+    const data = await DB.Event.paginate(filter, options);
     return res.json(data);
   } catch (e) {
     processError(e, res);
@@ -285,7 +290,7 @@ app.post('/getNftsForAddress', async (req: Request, res: Response) => {
       limit: limit ? limit : 25,
       skipFullCount: true,
       allowDiskUse: true,
-      sort: '-contractAddress',
+      sort: '-contractAddress tokenId',
       lean: true
     };
     const data = await DB.Nft.paginate({ owner: getAddress(address), contractAddress: getAddress(contractAddress) }, options);
@@ -415,7 +420,7 @@ app.post('/getNativeTransfersForAddress', async (req: Request, res: Response) =>
       sort: '-blockNumber',
       skipFullCount: true,
       allowDiskUse: true,
-      populate: 'extrinsicData token nftCollection',
+      populate: 'extrinsicData tokenNative nftCollection',
       lean: true
     };
 
@@ -636,11 +641,10 @@ app.post('/getFuturepasses', async (req: Request, res: Response) => {
       lean: true
     };
 
-    const data = await DB.EvmTransaction.paginate(
+    const data = await DB.Event.paginate(
       {
-        from: getAddress('0xb2cB82436AfD5D34867af68277Ae8A268Dd09661'),
-        'events.eventName': 'FuturepassCreated',
-        'events.owner': getAddress(address)
+        method: 'FuturepassCreated',
+        'args.delegate': getAddress(address),
       },
       options
     );

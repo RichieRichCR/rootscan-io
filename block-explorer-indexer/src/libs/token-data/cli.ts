@@ -14,6 +14,16 @@ program.parse();
 
 const options = program.opts();
 
+const C_REGEX_NORMAL_TOKEN_METADATA_URL = /^.*\/(\d+)$/;
+
+// a polyfill for it would be:
+AbortSignal.timeout ??= function timeout(ms) {
+  const ctrl = new AbortController()
+  setTimeout(() => ctrl.abort(), ms)
+  return ctrl.signal
+}
+
+
 if (!options?.network || !options?.contractaddress || !options?.type) {
   console.error(`Missing one of the required arguments.`);
   process.exit(1);
@@ -137,19 +147,17 @@ export const ethereumClient: PublicClient = createPublicClient({
   transport: http()
 });
 
-const detectedUriUrl = async () => {
+const getTokenMetadataUrl = async (tokenId = 1): Promise<string> => {
+  let data
   if (tokenType === 'erc721') {
-    let data = (await evmClient.readContract({
+     data = (await evmClient.readContract({
       address: contractAddress as Address,
       abi: ERC721_ABI,
       functionName: 'tokenURI',
-      args: [1]
+      args: [tokenId]
     })) as string;
-
-    if (!data) {
-      throw new Error('Unable to determine uri for contract');
-    }
-    if (data.startsWith('ethereum://')) {
+  
+    if (data?.startsWith('ethereum://')) {
       // get ethereum address from url string
       const parts = data.split(/[:/]/).filter(part => part !== '');
       ethereumContractAddress = getAddress(parts[1]);
@@ -158,25 +166,24 @@ const detectedUriUrl = async () => {
         address: ethereumContractAddress as Address,
         abi: ERC721_ABI,
         functionName: 'tokenURI',
-        args: [1]
+        args: [tokenId]
       })) as string;
     }
-    const uri = data.substring(0, data?.length - 1);
-    return uri;
+    return data;
   }
+
   if (tokenType === 'erc1155') {
-    const data = (await evmClient.readContract({
+    data = (await evmClient.readContract({
       address: contractAddress as Address,
       abi: ERC1155_ABI,
       functionName: 'uri',
-      args: [1]
+      args: [tokenId]
     })) as string;
-    if (!data) {
-      throw new Error('Unable to determine uri for contract');
-    }
-    const uri = data.substring(0, data?.length - 1);
-    return uri;
   }
+  if (!data) {
+    throw new Error('Unable to determine uri for contract');
+  }
+  return data;
 };
 
 const getTotalSupply = async () => {
@@ -204,16 +211,16 @@ const getTotalSupply = async () => {
   return Number(data);
 };
 
-const sleep = (ms: number) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, ms);
-  });
-};
-
 const run = async () => {
-  const uri = await detectedUriUrl();
+  const uri = await getTokenMetadataUrl(1);
+  const getTokenMetadataUrlFn = 
+    C_REGEX_NORMAL_TOKEN_METADATA_URL.test(uri!) ?
+      (tokenId) => {
+        const uri2 = uri.substring(0, uri?.length - 1);
+        return `${uri2}${tokenId}`
+      }: 
+      getTokenMetadataUrl;
+  
   const totalSupply = await getTotalSupply();
   console.log(`Detected ${uri} as URI with a totalSupply of ${totalSupply}`);
   const fileDir = `./blockchains/${network}/${contractAddress}.json`;
@@ -221,42 +228,47 @@ const run = async () => {
     return false;
   });
 
-  let data: any = [];
+  let data: Record<string, unknown>[] = [];
   if (exists) {
     const readData = await fs.readFile(fileDir, 'utf-8');
     data = structuredClone(JSON.parse(readData));
   }
 
   for (let tokenId = 0; tokenId < totalSupply; tokenId++) {
-    const url = `${uri}${tokenId}`;
-    console.log(`Fetching ${tokenId}`);
+    const url = await getTokenMetadataUrlFn(tokenId)
+    console.log(`Fetching ${tokenId} ${url}`);
     const exists = data?.find((a) => Number(a.tokenId) === tokenId);
     if (exists) {
       console.log(`EXISTS.. ${tokenId}`);
-      continue;
-    }
-    let res;
-    try {
-      res = await fetch(url);
-    } catch {
-/* eslint no-empty: "error" */
-    }
-    if (res?.ok) {
-      let jsonData: any = undefined;
+    } else {
+      let res;
       try {
-        jsonData = await res.json();
+        res = await fetch(url, { signal: AbortSignal.timeout(5000) });
       } catch {
         /* eslint no-empty: "error" */
       }
-      if (!jsonData) return true;
-      if (jsonData?.tokenId === undefined) {
-        jsonData.tokenId = Number(tokenId);
+      if (res?.ok) {
+        let jsonData: Record<string, unknown> | undefined = undefined;
+        try {
+          jsonData = await res.json();
+        } catch {
+          /* eslint no-empty: "error" */
+        }
+        if (!jsonData) return true;
+        if (jsonData?.tokenId === undefined) {
+          jsonData.tokenId = Number(tokenId);
+        }
+        console.log(`Fetched ${tokenId} success.`);
+        delete jsonData.attributes;
+        delete jsonData.properties;
+        delete jsonData._id;
+        data.push(jsonData);
       }
-      console.log(`Fetched ${tokenId} success.`);
-      data.push(jsonData);
     }
-
-    await fs.writeFile(fileDir, JSON.stringify(data, null, 0));
+    if (tokenId % 100 === 0 || tokenId + 1 >= totalSupply) {
+      await fs.writeFile(fileDir, JSON.stringify(data, null, 0));
+      console.log('saved')
+    }
   }
 };
 

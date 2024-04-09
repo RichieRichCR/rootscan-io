@@ -63,6 +63,16 @@ schema.virtual('token', {
   justOne: true
 });
 
+schema.virtual('tokenNative', {
+  ref: 'Token',
+  localField: 'args.assetId',
+  foreignField: 'assetId',
+  match: {
+    contractAddress: { $ne: null }
+  },
+  justOne: true
+});
+
 schema.virtual('extrinsicData', {
   ref: 'Extrinsic',
   localField: 'extrinsicId',
