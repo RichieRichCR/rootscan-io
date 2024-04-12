@@ -22,7 +22,7 @@ export const substrateClient = async (): Promise<ApiPromise> => {
   const url = process?.env?.RPC_WS_URL;
   api = await ApiPromise.create({
     ...getApiOptions(),
-    provider: new WsProvider(url)
+    provider: new WsProvider(url, 1000)
   });
 
   api.on('connected', () => {
