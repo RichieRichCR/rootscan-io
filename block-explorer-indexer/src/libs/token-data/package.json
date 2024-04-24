@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "build": "tsc -p ./tsconfig.json && tsc-alias -p ./tsconfig.json",
+    "generate": "tsx cli.ts --network root --contractaddress 0xaaAaaAAa00008864000000000000000000000000 --type erc721",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
