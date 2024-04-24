@@ -14,6 +14,10 @@ Each folder is separate project.
 * pnpm - to install dependencies
 * nodejs - to run the project
 
+### Optional
+
+* [snyk](https://docs.snyk.io/snyk-cli/install-or-update-the-snyk-cli) - security checks
+
 ## Getting Started
 
 ### Setup
