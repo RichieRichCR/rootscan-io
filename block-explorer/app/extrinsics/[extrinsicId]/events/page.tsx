@@ -4,6 +4,8 @@ import PaginationSuspense from "@/components/pagination-suspense"
 import { getEvents } from "@/lib/api"
 import { getPaginationData } from "@/lib/utils"
 
+export const revalidate = 0;
+
 const getData = async ({
   searchParams,
   params,
@@ -17,6 +19,7 @@ const getData = async ({
   })
   return data
 }
+
 export default async function Page({
   searchParams,
   params,
