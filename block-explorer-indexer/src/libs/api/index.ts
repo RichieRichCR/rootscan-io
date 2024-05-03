@@ -8,7 +8,7 @@ import helmet from 'helmet';
 import moment from 'moment';
 import { Address, Hash, formatUnits, getAddress } from 'viem';
 import { processError } from './utils';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, PaginateOptions } from 'mongoose';
 const app = express();
 
 /** @dev Middlewares */
@@ -38,7 +38,7 @@ app.post('/getBlock', async (req: Request, res: Response) => {
 app.post('/getBlocks', async (req: Request, res: Response) => {
   try {
     const { page, limit }: { page: number; limit: number } = req.body;
-    const options = {
+    const options: PaginateOptions = {
       page: page ? Number(page) : 1,
       limit: limit ? limit : 25,
       sort: '-number',
@@ -72,7 +72,7 @@ app.post('/getEvents', async (req: Request, res: Response) => {
       filter.blockNumber = Number(query.blockNumber);
     }
 
-    const options: Record<string, unknown> = {
+    const options: PaginateOptions = {
       page: page ? Number(page) : 1,
       limit: limit ? limit : 25,
       sort: '-blockNumber',
@@ -82,7 +82,7 @@ app.post('/getEvents', async (req: Request, res: Response) => {
     };
 
     // if filter by blockNumber or extrinsicId sort only by eventId
-    if ( Object.keys(filter).length) {
+    if (Object.keys(filter).length) {
       options.sort = 'eventId';
       options.collation = { locale: 'en', numericOrdering: true };
     }
@@ -158,7 +158,7 @@ app.post('/getTokenHolders', async (req: Request, res: Response) => {
     let holders: { docs?: (IBalance | INFT)[]; type?: TTokenType } = {};
     if (data) {
       if (data?.type === 'ERC20') {
-        const options = {
+        const options: PaginateOptions = {
           page: page ? Number(page) : 1,
           limit: 25,
           sort: '-balance',
