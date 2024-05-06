@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { MenuIcon, XIcon } from "lucide-react"
+import { MenuIcon, XIcon} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Fragment, useState } from "react"
@@ -19,6 +19,7 @@ const items = [
   { title: "Staking", href: "/staking" },
   { title: "Verified Contracts", href: "/verified-contracts" },
   { title: "Resources", href: "/resources" },
+  { title: "API", href: "https://build.rootscan.io", newTab: true },
 ]
 
 export function Navigation() {
@@ -29,10 +30,10 @@ export function Navigation() {
     <Fragment>
       <div className="hidden items-center gap-4 px-4 lg:flex">
         {items.map((item, _) => (
-          <Link href={item.href} key={_}>
+          <Link href={item.href} key={_} target={item.newTab ? "_blank" : "_self"}>
             <div
               className={cn([
-                "text-sm font-bold text-muted-foreground duration-150 ease-in hover:text-primary",
+                "text-sm font-bold text-muted-foreground duration-150 ease-in hover:text-primary flex items-center",
                 formattedPathname === item.href ? "text-primary" : "",
               ])}
             >
@@ -69,8 +70,8 @@ export const MobileMenu = () => {
           <CardContent>
             <div className="flex flex-col gap-4">
               {items.map((item, _) => (
-                <Link href={item.href} onClick={() => setOpen(false)} key={_}>
-                  <div className="text-sm font-bold text-muted-foreground duration-150 ease-in hover:text-primary">
+                <Link href={item.href} onClick={() => setOpen(false)} key={_} target={item.newTab ? "_blank" : "_self"}>
+                  <div className="text-sm font-bold text-muted-foreground duration-150 ease-in hover:text-primary flex items-center">
                     {item.title}
                   </div>
                 </Link>
