@@ -40,7 +40,7 @@ export default async function Page({ params, searchParams }) {
             <TableRow>
               <TableHead>Asset</TableHead>
               <TableHead>Symbol</TableHead>
-              <TableHead>Contract Aaddress</TableHead>
+              <TableHead>Contract Address</TableHead>
               <TableHead>Balance</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Value</TableHead>
