@@ -20,6 +20,7 @@ const fetcher = async ({
 
   return fetch(useUrl, {
     method,
+    keepalive: false,
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
