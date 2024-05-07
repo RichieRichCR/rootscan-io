@@ -21,12 +21,10 @@ import { Fragment } from "react"
 import { formatUnits } from "viem"
 
 const getData = async ({ params, searchParams }: any) => {
-  const data = await getTokenBalances({
+  return await getTokenBalances({
     address: params.address,
     page: searchParams?.page,
   })
-
-  return data
 }
 
 export default async function Page({ params, searchParams }) {
@@ -42,7 +40,7 @@ export default async function Page({ params, searchParams }) {
             <TableRow>
               <TableHead>Asset</TableHead>
               <TableHead>Symbol</TableHead>
-              <TableHead>Contractaddress</TableHead>
+              <TableHead>Contract Address</TableHead>
               <TableHead>Balance</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Value</TableHead>

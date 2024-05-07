@@ -20,9 +20,7 @@ export const metadata: Metadata = {
 }
 
 const getData = async ({ searchParams, params }) => {
-  let data = await getVerifiedContracts({ page: searchParams?.page || 1 })
-
-  return data
+  return await getVerifiedContracts({ page: searchParams?.page || 1 })
 }
 export default async function Page({ searchParams, params }) {
   const data = await getData({ searchParams, params })
@@ -36,7 +34,7 @@ export default async function Page({ searchParams, params }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Contractaddress</TableHead>
+              <TableHead>Contract Address</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Deployer</TableHead>
             </TableRow>
