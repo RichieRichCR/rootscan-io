@@ -75,20 +75,33 @@ app.post('/getEvents', async (req: Request, res: Response) => {
     const options: PaginateOptions = {
       page: page ? Number(page) : 1,
       limit: limit ? limit : 25,
-      sort: '-blockNumber',
       allowDiskUse: true,
       skipFullCount: true,
-      lean: true,
     };
 
-    // if filter by blockNumber or extrinsicId sort only by eventId
-    if (Object.keys(filter).length) {
-      options.sort = 'eventId';
-      options.collation = { locale: 'en', numericOrdering: true };
+    if (filter.blockNumber || filter.extrinsicId) {
+      const pipeline = DB.Event.aggregate([
+        {
+          $match: filter,
+        },
+        {
+          $addFields: { 
+            numericPart: { $toInt: { $arrayElemAt: [ { $split: ["$eventId", "-"] }, 1 ] } }
+          }
+        },
+        { $sort: { "numericPart": 1 } }, 
+      ])
+      // @ts-expect-error aggregatePipeline does exist
+      const data = await DB.Event.aggregatePaginate(pipeline, options);
+      return res.json(data);
+    } else {
+      const data = await DB.Event.paginate(filter, {
+        ...options,
+        sort: '-blockNumber',
+        lean: true,
+      });
+      return res.json(data);
     }
-
-    const data = await DB.Event.paginate(filter, options);
-    return res.json(data);
   } catch (e) {
     processError(e, res);
   }
@@ -575,6 +588,7 @@ app.post('/getTransaction', async (req: Request, res: Response) => {
     if (data && xrpPrice?.priceData) {
       data.xrpPriceData = xrpPrice?.priceData;
     }
+    console.log(data)
     return res.json(data);
   } catch (e) {
     processError(e, res);

@@ -1,6 +1,7 @@
 import mongoosePaginate from '@/mongoose-paginate-v2';
 import { IEvent } from '@/types';
 import Mongoose, { Schema } from 'mongoose';
+import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 const schema = new Schema<IEvent, Mongoose.Model<IEvent>>({
   eventId: { type: String },
@@ -15,6 +16,7 @@ const schema = new Schema<IEvent, Mongoose.Model<IEvent>>({
 });
 
 schema.plugin(mongoosePaginate);
+schema.plugin(aggregatePaginate);
 
 schema.index({ eventId: 1 });
 schema.index({ extrinsicId: 1 });
