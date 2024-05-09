@@ -44,6 +44,7 @@ export default function MainSearch() {
 
     // Is RNS Name
     const addressFrom = await getAddressFromRnsName('legend.root');
+    console.log('addressFrom', addressFrom)
     if(addressFrom) {
       return router.push(`/addresses/${addressFrom}`)
     }
