@@ -288,7 +288,6 @@ export const getRnsName = async (address: Address) => {
 
 export const getAddressFromRnsName = async (rnsName: string) => {
   const CHAIN_ID = Number(process?.env?.CHAIN_ID);
-  console.log('CHAIN_ID===', CHAIN_ID)
   const client = CHAIN_ID === 7668 ? rootClient : porciniClient
   return client.getEnsAddress({
     name: normalize(rnsName),

@@ -15,8 +15,11 @@ export default function MainSearch() {
       void performSearch()
     }
   }
-
+  const CHAIN_ID = Number(process?.env?.CHAIN_ID);
+  console.log('CHAIN_ID', CHAIN_ID)
   const performSearch = async () => {
+
+
     const value = ref?.current?.value
     if (!value) return
     ref.current.value = ""
