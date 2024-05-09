@@ -94,13 +94,17 @@ const logos: { [key: number]: { [key: Address]: string } } = {
     //RichieRich Collection / Prawn Tokens
     "0xAAaaaAaa00002864000000000000000000000000": "token-richie-rich.png",
     "0xCCccCcCC00014C64000000000000000000000000": "token-prawn.png",
-    "0xcCcCCCcc00015064000000000000000000000000": "token-king-prawn.png"
+    "0xcCcCCCcc00015064000000000000000000000000": "token-king-prawn.png",
+
+    //Reebok
+    "0xaaaAAAAA0000c464000000000000000000000000": "token-reebok.png"
   },
   7672: {
     // Root
     "0xcCcCCccC00000001000000000000000000000000": "token-root.png",
     // XRP
     "0xCCCCcCCc00000002000000000000000000000000": "token-xrp.png",
+
   },
 }
 
