@@ -63,7 +63,7 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
           address?: Address;
           formattedAmount?: string;
           formattedValue?: string;
-          tokenId?: number;
+          tokenId?: BigNumberish | bigint | number;
           name?: string;
           symbol?: string;
           type?: TTokenType;
@@ -109,7 +109,8 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
 
         // ERC721 Transfer
         if (tokenDetails?.type === 'ERC721' && event?.eventName === 'Transfer') {
-          event.tokenId = Number(event?.value) || Number(event?.tokenId);
+          const tokenId = event?.value || event?.tokenId;
+          event.tokenId = Number(tokenId) > 2_000_000_000 ? tokenId : Number(tokenId);
           event.name = tokenDetails.name;
           event.symbol = tokenDetails.symbol;
           event.type = 'ERC721';

@@ -67,8 +67,14 @@ export const getTokenDetails = async (contractAddress: Address, forceRefresh = f
     const name: string = parseMulticallResult(0);
     const symbol: string = parseMulticallResult(1);
     const decimals: number | undefined = parseMulticallResult(2);
-    const tokenURI: string | undefined = parseMulticallResult(3);
-    const balanceOfBatch: number | undefined = parseMulticallResult(4);
+    let tokenURI: string | undefined = parseMulticallResult(3);
+    if (!tokenURI && multicall[3].error?.shortMessage?.includes('ERC721')) {
+      tokenURI = 'ERC721';
+    }
+    let balanceOfBatch: number | undefined = parseMulticallResult(4);
+    if (balanceOfBatch === undefined && multicall[4].error?.shortMessage?.includes('ERC1155')) {
+      balanceOfBatch = 0
+    }
     let totalSupply: bigint | undefined = parseMulticallResult(5);
     const nativeId = contractAddressToNativeId(contractAddress);
 
@@ -122,9 +128,7 @@ export const getTokenDetails = async (contractAddress: Address, forceRefresh = f
     if (!tokenType) {
       if (tokenURI != undefined) {
         tokenType = 'ERC721';
-      }
-
-      if (balanceOfBatch) {
+      } else if (balanceOfBatch !== undefined) {
         tokenType = 'ERC1155';
       }
     }
@@ -184,7 +188,7 @@ export const getTokenDetails = async (contractAddress: Address, forceRefresh = f
       }
     }
 
-    if (!resolvedData?.name) return null;
+    if (resolvedData?.name === undefined) return null;
 
     await DB.Token.updateOne(
       { contractAddress: getAddress(contractAddress) },
