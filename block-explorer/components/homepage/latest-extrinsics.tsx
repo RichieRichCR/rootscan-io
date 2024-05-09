@@ -1,5 +1,3 @@
-"use client"
-
 import { FunctionSquare } from "lucide-react"
 import Link from "next/link"
 

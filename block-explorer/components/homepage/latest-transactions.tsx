@@ -1,5 +1,3 @@
-"use client"
-
 import { generateAvatarURL } from "@cfx-kit/wallet-avatar"
 import { ArrowLeftRight, ChevronRight } from "lucide-react"
 import Image from "next/image"
