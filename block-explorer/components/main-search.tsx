@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useRef } from "react"
 import { isAddress, isHash, isHex } from "viem"
 import { Input } from "./ui/input"
+import {getAddressFromRnsName} from "@/lib/api";
 
 export default function MainSearch() {
   const ref = useRef<HTMLInputElement>(null)
@@ -11,11 +12,11 @@ export default function MainSearch() {
 
   const handlePress = (e: any) => {
     if (e?.key === "Enter") {
-      performSearch()
+      void performSearch()
     }
   }
 
-  const performSearch = () => {
+  const performSearch = async () => {
     const value = ref?.current?.value
     if (!value) return
     ref.current.value = ""
@@ -36,11 +37,17 @@ export default function MainSearch() {
         }
       }
     }
-
     // Is Block
     if (Number.isInteger(parseInt(value)) && !isHex(value)) {
       return router.push(`/blocks/${value}`)
     }
+
+    // Is RNS Name
+    const addressFrom = await getAddressFromRnsName('legend.root');
+    if(addressFrom) {
+      return router.push(`/addresses/${addressFrom}`)
+    }
+
   }
 
   return (

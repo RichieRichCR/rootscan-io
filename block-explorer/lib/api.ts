@@ -1,3 +1,8 @@
+import {getName} from "@ensdomains/ensjs/public";
+import {porciniClient, rootClient} from "@/lib/viem-client";
+import {Address} from "viem";
+import { normalize } from 'viem/ens'
+
 const BASE_URL = process.env.BASE_URL
 
 const fetcher = async ({
@@ -268,5 +273,23 @@ export const getContractVerification = ({ contractAddress }) => {
     method: "GET",
     url: `https://sourcify.dev/server/files/${CHAIN_ID}/${contractAddress}`,
     noBaseUrl: true,
+  })
+}
+
+export const getRnsName = async (address: Address) => {
+  const CHAIN_ID = Number(process?.env?.CHAIN_ID);
+  const client = CHAIN_ID === 7668 ? rootClient : porciniClient
+  //todo fix in future ts error
+  // @ts-ignore
+  return getName(client, {
+    address: address,
+  })
+}
+
+export const getAddressFromRnsName = async (rnsName: string) => {
+  const CHAIN_ID = Number(process?.env?.CHAIN_ID);
+  const client = CHAIN_ID === 7668 ? rootClient : porciniClient
+  return client.getEnsAddress({
+    name: normalize(rnsName),
   })
 }

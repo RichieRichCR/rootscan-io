@@ -1,4 +1,5 @@
 import { createPublicClient, defineChain, http } from "viem"
+import {addresses} from "./rootnameservice";
 export const CHAIN_ID = Number(process?.env?.CHAIN_ID)
 
 export const root = defineChain({
@@ -15,6 +16,7 @@ export const root = defineChain({
       address: "0xc9C2E2429AeC354916c476B30d729deDdC94988d",
       blockCreated: 9218338,
     },
+    ...addresses[7668]
   },
   rpcUrls: {
     default: {
@@ -24,6 +26,11 @@ export const root = defineChain({
     public: {
       http: ["https://root.rootnet.live/archive"],
       webSocket: ["wss://root.rootnet.live/archive/ws"],
+    },
+  },
+  subgraphs: {
+    ens: {
+      url: 'https://subgraph.rootnameservice.com/subgraphs/name/graphprotocol/ens/graphql',
     },
   },
 })
@@ -42,6 +49,7 @@ export const porcini = defineChain({
       address: "0xFC8bd6469c65d58fBf969512Be1564579cEc4855",
       blockCreated: 859439,
     },
+    ...addresses[7672]
   },
   rpcUrls: {
     default: {
@@ -53,6 +61,12 @@ export const porcini = defineChain({
       webSocket: ["wss://porcini.rootnet.app/archive/ws"],
     },
   },
+  subgraphs: {
+    ens: {
+      url: 'https://subgraph.rootnameservice.com/subgraphs/name/graphprotocol/ens/graphql',
+    },
+  },
+  testnet: true,
 })
 
 export const rootClient = createPublicClient({

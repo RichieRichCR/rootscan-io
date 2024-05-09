@@ -1,5 +1,4 @@
-"use client"
-
+import { Suspense } from "react"
 import {
   getAddressName,
   knownAddressNames,
@@ -11,7 +10,31 @@ import { Address, getAddress, isAddress } from "viem"
 import { CopyButton } from "./copy-button"
 import Logo from "./logo"
 import Tooltip from "./tooltip"
-export default function AddressDisplay({
+import {getRnsName} from "@/lib/api";
+import {Skeleton} from "@/components/ui/skeleton";
+
+interface AddressDisplayProps {
+  address: Address
+  nameTag?: string
+  rnsName?: string | null
+  isContract?: boolean
+  hideCopyButton?: boolean
+  useShortenedAddress?: boolean
+  className?: string
+  isTokenTracker?: boolean
+  isNeedRnsName?: boolean
+}
+
+export default function AddressDisplay(props: AddressDisplayProps) {
+  return (
+    <Suspense fallback={<Skeleton className="w-32 h-7" />}>
+      <AddressView {...props} />
+    </Suspense>
+  )
+}
+
+
+async function AddressView({
   address,
   nameTag,
   rnsName,
@@ -20,21 +43,14 @@ export default function AddressDisplay({
   useShortenedAddress = false,
   className,
   isTokenTracker,
-}: {
-  address: Address
-  nameTag?: string
-  rnsName?: string
-  isContract?: boolean
-  hideCopyButton?: boolean
-  useShortenedAddress?: boolean
-  className?: string
-  isTokenTracker?: boolean
-}) {
+                             isNeedRnsName = true,
+}: AddressDisplayProps) {
+  const currRnsName = (!isNeedRnsName || hideCopyButton) ? null : await getRnsName(address);
   if (!address || !isAddress(address)) return null
   const name = knownAddressNames[getAddress(address)]
     ? knownAddressNames[getAddress(address)]
-    : rnsName
-      ? rnsName
+    : (rnsName || currRnsName)
+      ? rnsName ?? currRnsName?.name
       : nameTag
         ? nameTag
         : getAddressName(address, useShortenedAddress)
