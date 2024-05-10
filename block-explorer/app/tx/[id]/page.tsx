@@ -21,6 +21,7 @@ import { CornerLeftUp } from "lucide-react"
 import Link from "next/link"
 import { Hash, getAddress } from "viem"
 import ShowMoreTransaction from "./components/show-more-tx"
+import Tooltip from "@/components/tooltip"
 
 const getData = async ({ params }: { params: { id: Hash } }) => {
   const data = await getTransaction({ hash: params.id })
@@ -228,7 +229,12 @@ export default async function Page({ params }: { params: { id: Hash } }) {
                                 contractAddress={event?.address}
                                 tokenId={event?.tokenId}
                               />
-                              <span>{event.tokenId}</span>
+
+                              {String(event.tokenId)?.length > 8 ? 
+                                <Tooltip text={event.tokenId}>
+                                  {String(event.tokenId).slice(0, 8)}...
+                                </Tooltip> : <span>{event.tokenId}</span>
+                              }
 
                               <Link href={`/addresses/${event.address}`}>
                                 {event.name} {event.symbol && `(${event.symbol})`}
