@@ -110,7 +110,7 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
         // ERC721 Transfer
         if (tokenDetails?.type === 'ERC721' && event?.eventName === 'Transfer') {
           const tokenId = event?.value || event?.tokenId;
-          event.tokenId = Number(tokenId) > 2_000_000_000 ? tokenId : Number(tokenId);
+          event.tokenId = Number(tokenId) > 2_000_000_000 ? tokenId?.toString() : Number(tokenId);
           event.name = tokenDetails.name;
           event.symbol = tokenDetails.symbol;
           event.type = 'ERC721';
@@ -166,6 +166,7 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
         break;
       }
     }
+    console.log(events)
   }
 
   return { tags, events };
