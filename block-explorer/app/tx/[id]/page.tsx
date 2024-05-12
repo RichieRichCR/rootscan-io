@@ -21,6 +21,7 @@ import { CornerLeftUp } from "lucide-react"
 import Link from "next/link"
 import { Hash, getAddress } from "viem"
 import ShowMoreTransaction from "./components/show-more-tx"
+import Tooltip from "@/components/tooltip"
 
 const getData = async ({ params }: { params: { id: Hash } }) => {
   const data = await getTransaction({ hash: params.id })
@@ -228,10 +229,15 @@ export default async function Page({ params }: { params: { id: Hash } }) {
                                 contractAddress={event?.address}
                                 tokenId={event?.tokenId}
                               />
-                              <span>{event.tokenId}</span>
+
+                              {String(event.tokenId)?.length > 8 ? 
+                                <Tooltip text={event.tokenId}>
+                                  {String(event.tokenId).slice(0, 8)}...
+                                </Tooltip> : <span>{event.tokenId}</span>
+                              }
 
                               <Link href={`/addresses/${event.address}`}>
-                                {event.name} ({event.symbol})
+                                {event.name} {event.symbol && `(${event.symbol})`}
                               </Link>
                             </div>
                           </div>
@@ -329,6 +335,28 @@ export default async function Page({ params }: { params: { id: Hash } }) {
                               </Link>
                             </div>
                           </div>
+                        )
+                      if (
+                        event?.type === "ERC1155"
+                      )
+                        return (
+                          <div className="flex flex-col flex-wrap" key={_}>
+                          <span className="text-muted-foreground">
+                            {event.eventName} ({event?.type})
+                          </span>
+                          <div className="flex flex-wrap items-center gap-2 truncate">
+                            <span>From</span>
+                            <AddressDisplay
+                              address={event.from}
+                              useShortenedAddress
+                            />
+                            <span>To</span>
+                            <AddressDisplay
+                              address={event.to}
+                              useShortenedAddress
+                            />
+                          </div>
+                        </div>
                         )
 
                       return null

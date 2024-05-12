@@ -588,7 +588,6 @@ app.post('/getTransaction', async (req: Request, res: Response) => {
     if (data && xrpPrice?.priceData) {
       data.xrpPriceData = xrpPrice?.priceData;
     }
-    console.log(data)
     return res.json(data);
   } catch (e) {
     processError(e, res);

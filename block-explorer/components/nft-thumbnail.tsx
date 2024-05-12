@@ -16,7 +16,7 @@ export default async function NftThumbnail({ contractAddress, tokenId }) {
       <div
         className={cn([
           size,
-          `grid select-none place-items-center rounded-xl bg-muted text-muted-foreground`,
+          `bg-muted text-muted-foreground grid select-none place-items-center rounded-xl`,
         ])}
       >
         <div>NFT</div>
