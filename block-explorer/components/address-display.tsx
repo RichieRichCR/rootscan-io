@@ -1,16 +1,15 @@
-"use client"
+'use client';
 
-import {
-  getAddressName,
-  knownAddressNames,
-} from "@/lib/constants/knownAddresses"
-import { cn } from "@/lib/utils"
-import { FileText } from "lucide-react"
-import Link from "next/link"
-import { Address, getAddress, isAddress } from "viem"
-import { CopyButton } from "./copy-button"
-import Logo from "./logo"
-import Tooltip from "./tooltip"
+import { getAddressName, knownAddressNames } from '@/lib/constants/knownAddresses';
+import { cn } from '@/lib/utils';
+import { FileText } from 'lucide-react';
+import Link from 'next/link';
+import { Address, getAddress, isAddress } from 'viem';
+
+import { CopyButton } from './copy-button';
+import Logo from './logo';
+import Tooltip from './tooltip';
+
 export default function AddressDisplay({
   address,
   nameTag,
@@ -21,30 +20,28 @@ export default function AddressDisplay({
   className,
   isTokenTracker,
 }: {
-  address: Address
-  nameTag?: string
-  rnsName?: string
-  isContract?: boolean
-  hideCopyButton?: boolean
-  useShortenedAddress?: boolean
-  className?: string
-  isTokenTracker?: boolean
+  address: Address;
+  nameTag?: string;
+  rnsName?: string;
+  isContract?: boolean;
+  hideCopyButton?: boolean;
+  useShortenedAddress?: boolean;
+  className?: string;
+  isTokenTracker?: boolean;
 }) {
-  if (!address || !isAddress(address)) return null
+  if (!address || !isAddress(address)) return null;
   const name = knownAddressNames[getAddress(address)]
     ? knownAddressNames[getAddress(address)]
     : rnsName?.trim().length
-      ? rnsName
-      : nameTag?.trim().length
-        ? nameTag
-        : getAddressName(address, useShortenedAddress)
+    ? rnsName
+    : nameTag?.trim().length
+    ? nameTag
+    : getAddressName(address, useShortenedAddress);
 
-  const isFuturepass = address?.toLowerCase()?.startsWith("0xffffffff")
+  const isFuturepass = address?.toLowerCase()?.startsWith('0xffffffff');
 
   return (
-    <div
-      className={cn(["flex items-center gap-2", className ? className : ""])}
-    >
+    <div className={cn(['flex items-center gap-2', className ? className : ''])}>
       {isContract ? (
         <Tooltip text="EVM Contract" asChild>
           <FileText className="text-muted-foreground size-4" />
@@ -56,14 +53,11 @@ export default function AddressDisplay({
         </Tooltip>
       ) : null}
       <Tooltip text={address} disabled={!useShortenedAddress} asChild>
-        <Link
-          href={`/${isTokenTracker ? "token" : "addresses"}/${address}`}
-          className="truncate"
-        >
+        <Link href={`/${isTokenTracker ? 'token' : 'addresses'}/${address}`} className="truncate">
           {name}
         </Link>
       </Tooltip>
       {!hideCopyButton || !address ? <CopyButton value={address} /> : null}
     </div>
-  )
+  );
 }
