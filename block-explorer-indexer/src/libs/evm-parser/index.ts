@@ -65,6 +65,7 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
           formattedValue?: string;
           tokenId?: BigNumberish | bigint | number;
           name?: string;
+          id?: string | number;
           symbol?: string;
           type?: TTokenType;
           eventName?: string;
@@ -110,7 +111,7 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
         // ERC721 Transfer
         if (tokenDetails?.type === 'ERC721' && event?.eventName === 'Transfer') {
           const tokenId = event?.value || event?.tokenId;
-          event.tokenId = Number(tokenId) > 2_000_000_000 ? tokenId?.toString() : Number(tokenId);
+          event.tokenId = String(tokenId).length > 9 ? tokenId?.toString() : Number(tokenId);
           event.name = tokenDetails.name;
           event.symbol = tokenDetails.symbol;
           event.type = 'ERC721';
@@ -148,6 +149,7 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
           (event?.eventName === 'Transfer' || event?.eventName === 'TransferSingle' || event?.eventName === 'TransferBatch')
         ) {
           event.name = tokenDetails.name;
+          event.id = String(event.id).length > 9 ? event.id?.toString() : Number(event.id);
           event.symbol = tokenDetails.symbol;
           event.type = 'ERC1155';
           const tag = 'NFT Transfer';
@@ -166,7 +168,6 @@ export const parseEventsFromEvmTx = async (tx: TransactionReceipt & Transaction)
         break;
       }
     }
-    console.log(events)
   }
 
   return { tags, events };

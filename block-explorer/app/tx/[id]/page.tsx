@@ -225,10 +225,12 @@ export default async function Page({ params }: { params: { id: Hash } }) {
                                 useShortenedAddress
                               />
                               <span>TokenID</span>
-                              <NftThumbnail
-                                contractAddress={event?.address}
-                                tokenId={event?.tokenId}
-                              />
+                              {String(event.tokenId)?.length < 8 &&
+                                <NftThumbnail
+                                  contractAddress={event?.address}
+                                  tokenId={event?.tokenId}
+                                />
+                              }
 
                               {String(event.tokenId)?.length > 8 ? 
                                 <Tooltip text={event.tokenId}>
@@ -337,7 +339,8 @@ export default async function Page({ params }: { params: { id: Hash } }) {
                           </div>
                         )
                       if (
-                        event?.type === "ERC1155"
+                        event?.type === "ERC1155" &&
+                        (event?.eventName === "TransferSingle" || event?.eventName === "TransferBatch")
                       )
                         return (
                           <div className="flex flex-col flex-wrap" key={_}>
@@ -355,6 +358,24 @@ export default async function Page({ params }: { params: { id: Hash } }) {
                               address={event.to}
                               useShortenedAddress
                             />
+                            {event.id && 
+                            <>
+                              <span>TokenID</span>
+                              {String(event.id).length > 8 ? 
+                                <Tooltip text={event.id}>
+                                  {String(event.id).slice(0, 8)}...
+                                </Tooltip> : <span>{event.id}</span>
+                              }
+                            </>
+                            }
+                            <span className="text-muted-foreground">
+                              Qty
+                            </span>
+                            <span>
+                              {event?.value
+                                ? formatNumber(event?.value)
+                                : "0"}
+                            </span>
                           </div>
                         </div>
                         )

@@ -33,9 +33,9 @@ export default function AddressDisplay({
   if (!address || !isAddress(address)) return null
   const name = knownAddressNames[getAddress(address)]
     ? knownAddressNames[getAddress(address)]
-    : rnsName
+    : rnsName?.trim().length
       ? rnsName
-      : nameTag
+      : nameTag?.trim().length
         ? nameTag
         : getAddressName(address, useShortenedAddress)
 
@@ -47,7 +47,7 @@ export default function AddressDisplay({
     >
       {isContract ? (
         <Tooltip text="EVM Contract" asChild>
-          <FileText className="size-4 text-muted-foreground" />
+          <FileText className="text-muted-foreground size-4" />
         </Tooltip>
       ) : null}
       {isFuturepass ? (
