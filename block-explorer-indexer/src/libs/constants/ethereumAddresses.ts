@@ -61,6 +61,11 @@ const addresses: { nativeId: number; contractAddress: Address; type: TTokenType 
     nativeId: 17508,
     contractAddress: '0x35471f47c3C0BC5FC75025b97A19ECDDe00F78f8',
     type: 'ERC721'
+  },
+  {
+    nativeId: 27748,
+    contractAddress: '0x35471f47c3c0bc5fc75025b97a19ecdde00f78f8',
+    type: 'ERC721'
   }
 ];
 
