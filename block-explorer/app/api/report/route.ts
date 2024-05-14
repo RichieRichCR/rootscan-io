@@ -14,12 +14,15 @@ export async function GET(request: Request & { nextUrl: { searchParams: any } })
     },
     body: JSON.stringify({ from, to, address }),
   });
-
   const fileName = `report_${from}_${to}_${address}.csv`;
+  const headers = {
+    'content-disposition': `attachment; filename="${fileName}"`,
+  };
+  Object.entries(response.headers).forEach(([key, value]) => {
+    headers[key] = value;
+  });
+
   return new Response(response.body, {
-    headers: {
-      ...response.headers, // copy the previous headers
-      'content-disposition': `attachment; filename="${fileName}"`,
-    },
+    headers,
   });
 }
