@@ -14,5 +14,5 @@ module.exports = [
     files: ['**/*.js', '**/*.jsx'],
     rules: {},
   },
-  {ignores: ['build']}
+  { ignores: ['build'] },
 ];
