@@ -1031,7 +1031,6 @@ app.post('/getAddresses', async (req: Request, res: Response) => {
 app.post('/getBridgeTransactions', async (req: Request, res: Response) => {
   try {
     const { page, limit }: { page: number; limit: number } = req.body;
-    const address = getAddress(req.body.address).toString();
 
     const options = {
       page: page ? Number(page) : 1,
@@ -1044,8 +1043,8 @@ app.post('/getBridgeTransactions', async (req: Request, res: Response) => {
     };
 
     const genPartialKey = (key: string, isLowerCase: boolean) => {
-      if (!address) return {};
-
+      if (!req.body.address) return {};
+      const address = getAddress(req.body.address).toString();
       return { [key]: isLowerCase ? address.toLowerCase() : address };
     };
 
