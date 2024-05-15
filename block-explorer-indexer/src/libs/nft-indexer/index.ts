@@ -6,43 +6,70 @@ import { contractAddressToNativeId } from '@/utils';
 import { getTokenDetails } from '@/utils/tokenInformation';
 import queue from '@/workerpool';
 import { ApiPromise } from '@polkadot/api';
+import { Job } from 'bullmq';
+import moment from 'moment';
 import { Models } from 'mongoose';
 import { Abi, Address, MulticallResults, PublicClient, getAddress, isAddress } from 'viem';
+
+const C_MAX_BATCH = 1000;
 
 export default class NftIndexer {
   client: PublicClient;
   api: ApiPromise;
   DB: Models;
+  job?: Job;
 
-  constructor(client: PublicClient, api: ApiPromise, DB: Models) {
-    if (!client) throw new Error('EVM Client parameter missing');
+  constructor(client: PublicClient, api: ApiPromise, DB: Models, job?: Job) {
+    if (!client) {
+      throw new Error('EVM Client parameter missing');
+    }
     this.client = client;
-    if (!api) throw new Error('API parameter missing');
+
+    if (!api) {
+      throw new Error('API parameter missing');
+    }
     this.api = api;
-    if (!DB) throw new Error('Database models parameter missing');
+
+    if (!DB) {
+      throw new Error('Database models parameter missing');
+    }
     this.DB = DB;
+    this.job = job;
   }
 
-  async fetchHoldersOfCollection(contractAddress: Address) {
-    await getTokenDetails(getAddress(contractAddress), true);
+  private async logInfo(message) {
+    this.job?.log(moment().format('YYYY-MM-DD HH:mm:ss') + ': ' + message);
+    await logger.info(message);
+  }
+
+  async fetchHoldersOfCollection(contractAddressRaw: Address, fromTokenId?: number) {
+    const contractAddress = getAddress(contractAddressRaw);
+    await getTokenDetails(contractAddress, true);
+
+    const r = await this.DB.Nft.find({ contractAddress }).countDocuments();
+    console.log(r);
 
     const collection: IToken | null = await this.DB.Token.findOne({
-      contractAddress: getAddress(contractAddress),
+      contractAddress,
       type: { $in: ['ERC721', 'ERC1155'] },
     }).lean();
 
-    logger.info(
+    await this.logInfo(
       `Refreshing holders for ${collection?.name || '-'} ${contractAddress} [Total Supply: ${collection?.totalSupply}]`,
     );
 
-    if (!collection) throw new Error('Collection does not exist.');
-    if (!collection?.totalSupply || collection?.totalSupply === 0) return true;
+    if (!collection) {
+      throw new Error('Collection does not exist.');
+    }
+    if (!collection.totalSupply) {
+      return true;
+    }
     const currentChainId = await this.client.getChainId();
 
     if (collection?.type === 'ERC1155') {
       const nativeId = contractAddressToNativeId(contractAddress);
       const addresses = new Set();
-      const totalSupply = Number(collection?.totalSupply);
+      const totalSupply = Number(collection.totalSupply);
 
       // We only have to check the SFT pallet is there is a nativeId for this collection
       if (nativeId) {
@@ -73,17 +100,17 @@ export default class NftIndexer {
               {
                 'events.eventName': 'Transfer',
                 'events.type': 'ERC1155',
-                'events.address': getAddress(contractAddress),
+                'events.address': contractAddress,
               },
               {
                 'events.eventName': 'TransferSingle',
                 'events.type': 'ERC1155',
-                'events.address': getAddress(contractAddress),
+                'events.address': contractAddress,
               },
               {
                 'events.eventName': 'TransferBatch',
                 'events.type': 'ERC1155',
-                'events.address': getAddress(contractAddress),
+                'events.address': contractAddress,
               },
             ],
           },
@@ -93,7 +120,7 @@ export default class NftIndexer {
         },
         {
           $match: {
-            'events.address': getAddress(contractAddress),
+            'events.address': contractAddress,
           },
         },
         {
@@ -132,7 +159,7 @@ export default class NftIndexer {
       for (const address of addressesArray) {
         const a = Array(totalSupply).fill(address);
         calls.push({
-          address: getAddress(contractAddress),
+          address: contractAddress,
           abi: ABIs.ERC1155_ORIGINAL as Abi,
           functionName: 'balanceOfBatch',
           args: [a, q],
@@ -163,13 +190,13 @@ export default class NftIndexer {
       let index = 0;
       for (const result of multicall) {
         if (result?.status === 'success') {
-          const address = addressesArray[index] as Address;
+          const address = getAddress(addressesArray[index] as Address);
           const data = result?.result as bigint[];
           let tokenId = 0;
           for (const quantity of data) {
             if (Number(quantity) > 0) {
               const metadata = await getTokenMetadata(
-                getAddress(contractAddress),
+                contractAddress,
                 Number(tokenId),
                 Number(currentChainId) === 7668 ? 'root' : 'porcini',
               );
@@ -177,14 +204,14 @@ export default class NftIndexer {
                 updateOne: {
                   filter: {
                     tokenId: Number(tokenId),
-                    contractAddress: getAddress(contractAddress),
-                    owner: getAddress(address),
+                    contractAddress,
+                    owner: address,
                   },
                   update: {
                     $set: {
                       tokenId: Number(tokenId),
-                      contractAddress: getAddress(contractAddress),
-                      owner: getAddress(address),
+                      contractAddress,
+                      owner: address,
                       amount: Number(quantity),
                       attributes: metadata?.attributes,
                       image: metadata?.image || null,
@@ -194,13 +221,13 @@ export default class NftIndexer {
                   upsert: true,
                 },
               });
-            } else if (Number(quantity) === 0 && balCache?.[getAddress(address)]?.includes(Number(tokenId))) {
+            } else if (Number(quantity) === 0 && balCache?.[address]?.includes(Number(tokenId))) {
               ops.push({
                 deleteOne: {
                   filter: {
-                    contractAddress: getAddress(contractAddress),
+                    contractAddress,
                     tokenId: Number(tokenId),
-                    owner: getAddress(address),
+                    owner: address,
                   },
                 },
               });
@@ -210,21 +237,29 @@ export default class NftIndexer {
         }
         index++;
       }
-
       await this.DB.Nft.bulkWrite(ops);
     }
+
     if (collection?.type === 'ERC721') {
-      let current = 0;
+      let current = fromTokenId || 0;
       const end = Number(collection?.totalSupply);
-      const maxBatch = 1000;
 
       while (current < end) {
-        const currentEnd = current + maxBatch >= end ? end : current + maxBatch;
-        console.log(`${collection?.contractAddress} [BatchSize: ${maxBatch}] => FROM: ${current} -> ${currentEnd}`);
+        const currentEnd = current + C_MAX_BATCH >= end ? end : current + C_MAX_BATCH;
+
+        await this.logInfo(
+          `${collection.contractAddress} [BatchSize: ${C_MAX_BATCH}] => FROM: ${current} -> ${currentEnd}`,
+        );
+        await this.job?.updateProgress(end && Math.floor((current / end) * 100));
+        await this.job?.updateData({
+          ...this.job?.data,
+          current,
+        });
+
         const calls: { address: Address; abi: Abi; functionName: string; args: number[] }[] = [];
         for (let i = current; i < currentEnd; i++) {
           calls.push({
-            address: getAddress(contractAddress),
+            address: contractAddress,
             abi: ABIs.ERC721_ORIGINAL as Abi,
             functionName: 'ownerOf',
             args: [i],
@@ -242,7 +277,7 @@ export default class NftIndexer {
           if (result?.status === 'success') {
             if (isAddress(result?.result as string)) {
               const metadata = await getTokenMetadata(
-                getAddress(contractAddress),
+                contractAddress,
                 Number(tokenId),
                 Number(currentChainId) === 7668 ? 'root' : 'porcini',
               );
@@ -251,11 +286,11 @@ export default class NftIndexer {
                 updateOne: {
                   filter: {
                     tokenId: Number(tokenId),
-                    contractAddress: getAddress(contractAddress),
+                    contractAddress,
                   },
                   update: {
                     $set: {
-                      contractAddress: getAddress(contractAddress),
+                      contractAddress,
                       tokenId: Number(tokenId),
                       owner,
                       attributes: metadata?.attributes,
@@ -285,17 +320,17 @@ export default class NftIndexer {
 
   async createNftHolderRefreshTasks() {
     logger.info(`Creating Nft Holder refresh tasks`);
-    const collections = await this.DB.Token.find({ type: { $in: ['ERC721', 'ERC1155'] } }).distinct('contractAddress');
-    for (const contractAddress of collections) {
-      logger.info(`Creating REFETCH_NFT_HOLDERS task for ${contractAddress}`);
+    const collections = await this.DB.Token.find({ type: { $in: ['ERC721', 'ERC1155'] } }).lean();
+    for (const collection of collections) {
+      logger.info(`Creating REFETCH_NFT_HOLDERS task for ${collection.contractAddress}`);
       await queue.add(
         'REFETCH_NFT_HOLDERS',
         {
-          contractAddress: getAddress(contractAddress),
+          contractAddress: getAddress(collection.contractAddress),
         },
         {
           priority: 6,
-          jobId: `REFETCH_NFT_HOLDERS_${contractAddress}`,
+          jobId: `REFETCH_NFT_HOLDERS_${collection.contractAddress}`,
         },
       );
     }
