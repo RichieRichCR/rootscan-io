@@ -42,7 +42,7 @@ export default class NftIndexer {
     await logger.info(message);
   }
 
-  async fetchHoldersOfCollection(contractAddressRaw: Address, fromTokenId?: number) {
+  async fetchHoldersOfCollection(contractAddressRaw: Address) {
     const contractAddress = getAddress(contractAddressRaw);
     await getTokenDetails(contractAddress, true);
 
@@ -241,8 +241,9 @@ export default class NftIndexer {
     }
 
     if (collection?.type === 'ERC721') {
-      let current = fromTokenId || 0;
+      let current = this.job?.data?.current || 0;
       const end = Number(collection?.totalSupply);
+      const timeStart = new Date().getTime();
 
       while (current < end) {
         const currentEnd = current + C_MAX_BATCH >= end ? end : current + C_MAX_BATCH;
@@ -254,6 +255,7 @@ export default class NftIndexer {
         await this.job?.updateData({
           ...this.job?.data,
           current,
+          workTimeInSec: (new Date().getTime() - timeStart) / 1000,
         });
 
         const calls: { address: Address; abi: Abi; functionName: string; args: number[] }[] = [];
@@ -327,6 +329,7 @@ export default class NftIndexer {
         'REFETCH_NFT_HOLDERS',
         {
           contractAddress: getAddress(collection.contractAddress),
+          totalSupply: collection.totalSupply,
         },
         {
           priority: 6,

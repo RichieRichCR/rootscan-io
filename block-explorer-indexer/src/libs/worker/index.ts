@@ -57,7 +57,7 @@ const start = async () => {
         await new NftIndexer(evmApi, api, DB, job).fetchMetadataOfToken();
         break;
       case 'REFETCH_NFT_HOLDERS':
-        await new NftIndexer(evmApi, api, DB, job).fetchHoldersOfCollection(job.data.contractAddress, job.data.current);
+        await new NftIndexer(evmApi, api, DB, job).fetchHoldersOfCollection(job.data.contractAddress);
         break;
       case 'INDEX_BLOCK_RANGES':
         await indexer.reindexBlockRange(job.data.from, job.data.to);
