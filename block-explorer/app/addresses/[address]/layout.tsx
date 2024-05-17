@@ -6,7 +6,7 @@ import TokenDisplay from '@/components/token-display';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CardDetail from '@/components/ui/card-detail';
-import { getAddress } from '@/lib/api';
+import { getAddress, getRnsName } from '@/lib/api';
 import { ROOT_TOKEN } from '@/lib/constants/tokens';
 import { formatNumberDollars } from '@/lib/utils';
 import { generateAvatarURL } from '@cfx-kit/wallet-avatar';
@@ -30,6 +30,7 @@ const getData = async ({ params }) => {
 export default async function Layout({ children, params }: { children: React.ReactNode; params: any }) {
   const { address } = params;
   const data = await getData({ params });
+  const rnsName = await getRnsName(address);
   const tags: string[] = [];
   if (getAddressViem(address)?.toLowerCase()?.startsWith('0xffffffff')) {
     tags.push('Futurepass');
@@ -74,15 +75,25 @@ export default async function Layout({ children, params }: { children: React.Rea
                   <CardDetail.Content>{data?.nameTag}</CardDetail.Content>
                 </CardDetail.Wrapper>
               ) : null}
-              <CardDetail.Wrapper>
-                <CardDetail.Title>Address</CardDetail.Title>
-                <CardDetail.Content>
-                  <div className="flex items-center gap-2">
-                    <AddressDisplay address={address} className="truncate" />
-                    <QrCode address={address} />
-                  </div>
-                </CardDetail.Content>
-              </CardDetail.Wrapper>
+              <div className="flex items-center gap-12">
+                <CardDetail.Wrapper>
+                  <CardDetail.Title>Address</CardDetail.Title>
+                  <CardDetail.Content>
+                    <div className="flex items-center gap-2">
+                      <AddressDisplay address={address} className="truncate" />
+                      <QrCode address={address} />
+                    </div>
+                  </CardDetail.Content>
+                </CardDetail.Wrapper>
+                {rnsName && (
+                  <CardDetail.Wrapper>
+                    <CardDetail.Title>RSN</CardDetail.Title>
+                    <CardDetail.Content>
+                      <div className="flex items-center gap-2">{rnsName.name}</div>
+                    </CardDetail.Content>
+                  </CardDetail.Wrapper>
+                )}
+              </div>
               <CardDetail.Wrapper>
                 <CardDetail.Title>Root Balance</CardDetail.Title>
                 <CardDetail.Content>

@@ -1,5 +1,3 @@
-'use client';
-
 import { getAddressName, knownAddressNames } from '@/lib/constants/knownAddresses';
 import { cn } from '@/lib/utils';
 import { FileText } from 'lucide-react';
@@ -10,6 +8,17 @@ import { CopyButton } from './copy-button';
 import Logo from './logo';
 import Tooltip from './tooltip';
 
+interface AddressDisplayProps {
+  address: Address;
+  nameTag?: string;
+  rnsName?: string | null;
+  isContract?: boolean;
+  hideCopyButton?: boolean;
+  useShortenedAddress?: boolean;
+  className?: string;
+  isTokenTracker?: boolean;
+}
+
 export default function AddressDisplay({
   address,
   nameTag,
@@ -19,22 +28,13 @@ export default function AddressDisplay({
   useShortenedAddress = false,
   className,
   isTokenTracker,
-}: {
-  address: Address;
-  nameTag?: string;
-  rnsName?: string;
-  isContract?: boolean;
-  hideCopyButton?: boolean;
-  useShortenedAddress?: boolean;
-  className?: string;
-  isTokenTracker?: boolean;
-}) {
+}: AddressDisplayProps) {
   if (!address || !isAddress(address)) return null;
   const name = knownAddressNames[getAddress(address)]
     ? knownAddressNames[getAddress(address)]
-    : rnsName?.trim().length
+    : rnsName
     ? rnsName
-    : nameTag?.trim().length
+    : nameTag
     ? nameTag
     : getAddressName(address, useShortenedAddress);
 
