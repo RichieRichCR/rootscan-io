@@ -32,9 +32,9 @@ export default function AddressDisplay({
   if (!address || !isAddress(address)) return null;
   const name = knownAddressNames[getAddress(address)]
     ? knownAddressNames[getAddress(address)]
-    : rnsName
+    : rnsName?.trim().length
     ? rnsName
-    : nameTag
+    : nameTag?.trim().length
     ? nameTag
     : getAddressName(address, useShortenedAddress);
 
