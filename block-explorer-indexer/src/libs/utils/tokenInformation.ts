@@ -4,12 +4,15 @@ import logger from '@/logger';
 import { ethereumClient, evmClient, substrateClient } from '@/rpc';
 import { IToken, TTokenType } from '@/types';
 import { Abi, Address, formatUnits, getAddress, zeroAddress } from 'viem';
+
 import { contractAddressToNativeId } from '.';
 
-export const getTokenDetails = async (contractAddress: Address, forceRefresh = false): Promise<Omit<IToken, 'contractAddress'> | null> => {
-  const tokenLookUp: IToken | null = await DB.Token.findOne({
-    contractAddress: getAddress(contractAddress)
-  })
+export const getTokenDetails = async (
+  contractAddressRaw: Address,
+  forceRefresh = false,
+): Promise<Omit<IToken, 'contractAddress'> | null> => {
+  const contractAddress = getAddress(contractAddressRaw);
+  const tokenLookUp: IToken | null = await DB.Token.findOne({ contractAddress })
     .select('name symbol decimals type uri ethereumContractAddress')
     .lean();
 
@@ -20,39 +23,39 @@ export const getTokenDetails = async (contractAddress: Address, forceRefresh = f
   }
 
   if (forceRefresh || !tokenLookUp || !tokenLookUp?.type || !tokenLookUp?.name) {
-    const erc20Contract = { address: contractAddress as Address, abi: ABIs.ERC20_ORIGINAL as Abi };
-    const erc721Contract = { address: contractAddress as Address, abi: ABIs.ERC721_ORIGINAL as Abi };
-    const erc1155Contract = { address: contractAddress as Address, abi: ABIs.ERC1155_ORIGINAL as Abi };
+    const erc20Contract = { address: contractAddress, abi: ABIs.ERC20_ORIGINAL as Abi };
+    const erc721Contract = { address: contractAddress, abi: ABIs.ERC721_ORIGINAL as Abi };
+    const erc1155Contract = { address: contractAddress, abi: ABIs.ERC1155_ORIGINAL as Abi };
     const multicall: any[] = await evmClient.multicall({
       contracts: [
         {
           ...erc20Contract,
-          functionName: 'name'
+          functionName: 'name',
         },
         {
           ...erc20Contract,
-          functionName: 'symbol'
+          functionName: 'symbol',
         },
         {
           ...erc20Contract,
-          functionName: 'decimals'
+          functionName: 'decimals',
         },
         {
           ...erc721Contract,
           functionName: 'tokenURI',
-          args: [0]
+          args: [0],
         },
         {
           ...erc1155Contract,
           functionName: 'balanceOfBatch',
-          args: [[zeroAddress], [0]]
+          args: [[zeroAddress], [0]],
         },
         {
           ...erc20Contract,
-          functionName: 'totalSupply'
-        }
+          functionName: 'totalSupply',
+        },
       ],
-      allowFailure: true
+      allowFailure: true,
     });
 
     const parseMulticallResult = (index: number) => {
@@ -73,24 +76,27 @@ export const getTokenDetails = async (contractAddress: Address, forceRefresh = f
     }
     let balanceOfBatch: number | undefined = parseMulticallResult(4);
     if (balanceOfBatch === undefined && multicall[4].error?.shortMessage?.includes('ERC1155')) {
-      balanceOfBatch = 0
+      balanceOfBatch = 0;
     }
     let totalSupply: bigint | undefined = parseMulticallResult(5);
     const nativeId = contractAddressToNativeId(contractAddress);
 
-
     // Get real total supply from Ethereum if is bridged-collection
     if (tokenLookUp?.symbol === 'bridged-collection' && tokenLookUp?.type === 'ERC721') {
-      const totalSupplyRes = await ethereumClient.readContract({
+      if (!tokenLookUp?.ethereumContractAddress) {
+        throw Error(`Ethereum contract not provided for contract address: ${contractAddress}`);
+      }
+      const totalSupplyRes = (await ethereumClient.readContract({
         address: tokenLookUp?.ethereumContractAddress as Address,
         abi: ABIs.ERC721_ORIGINAL,
-        functionName: 'totalSupply'
-      }) as string
-      if (totalSupplyRes){
-        totalSupply = BigInt(totalSupplyRes)
+        functionName: 'totalSupply',
+      })) as string;
+
+      if (totalSupplyRes) {
+        totalSupply = BigInt(totalSupplyRes);
       }
     }
-    
+
     const api = await substrateClient();
 
     const lowerCaseContractAddress = contractAddress?.toLowerCase();
@@ -140,7 +146,7 @@ export const getTokenDetails = async (contractAddress: Address, forceRefresh = f
     const resolvedData: Omit<IToken, 'contractAddress'> = {
       name: palletData?.name ? palletData?.name : name,
       symbol: palletData?.symbol ? palletData?.symbol : symbol,
-      type: tokenType
+      type: tokenType,
     };
 
     if ((decimals || palletData?.decimals) && tokenType === 'ERC20') {
@@ -191,34 +197,34 @@ export const getTokenDetails = async (contractAddress: Address, forceRefresh = f
     if (resolvedData?.name === undefined) return null;
 
     await DB.Token.updateOne(
-      { contractAddress: getAddress(contractAddress) },
+      { contractAddress },
       {
         $set: {
           ...resolvedData,
-          contractAddress: getAddress(contractAddress),
-          type: tokenType
-        }
+          contractAddress,
+          type: tokenType,
+        },
       },
       {
-        upsert: true
-      }
+        upsert: true,
+      },
     );
 
     await DB.Address.updateOne(
-      { address: getAddress(contractAddress) },
+      { address: contractAddress },
       {
         $set: {
-          address: getAddress(contractAddress),
-          isContract: true
-        }
+          address: contractAddress,
+          isContract: true,
+        },
       },
       {
-        upsert: true
-      }
+        upsert: true,
+      },
     );
 
     logger.info(
-      `Detected [${resolvedData?.type}] => NativeID: ${nativeId} | name: ${resolvedData?.name} | symbol: ${resolvedData?.symbol}`
+      `Detected [${resolvedData?.type}] => NativeID: ${nativeId} | name: ${resolvedData?.name} | symbol: ${resolvedData?.symbol}`,
     );
 
     return resolvedData;

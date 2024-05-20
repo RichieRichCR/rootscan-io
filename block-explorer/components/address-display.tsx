@@ -1,40 +1,25 @@
-import { Suspense } from "react"
-import {
-  getAddressName,
-  knownAddressNames,
-} from "@/lib/constants/knownAddresses"
-import { cn } from "@/lib/utils"
-import { FileText } from "lucide-react"
-import Link from "next/link"
-import { Address, getAddress, isAddress } from "viem"
-import { CopyButton } from "./copy-button"
-import Logo from "./logo"
-import Tooltip from "./tooltip"
-import {getRnsName} from "@/lib/api";
-import {Skeleton} from "@/components/ui/skeleton";
+import { getAddressName, knownAddressNames } from '@/lib/constants/knownAddresses';
+import { cn } from '@/lib/utils';
+import { FileText } from 'lucide-react';
+import Link from 'next/link';
+import { Address, getAddress, isAddress } from 'viem';
+
+import { CopyButton } from './copy-button';
+import Logo from './logo';
+import Tooltip from './tooltip';
 
 interface AddressDisplayProps {
-  address: Address
-  nameTag?: string
-  rnsName?: string | null
-  isContract?: boolean
-  hideCopyButton?: boolean
-  useShortenedAddress?: boolean
-  className?: string
-  isTokenTracker?: boolean
-  isNeedRnsName?: boolean
+  address: Address;
+  nameTag?: string;
+  rnsName?: string | null;
+  isContract?: boolean;
+  hideCopyButton?: boolean;
+  useShortenedAddress?: boolean;
+  className?: string;
+  isTokenTracker?: boolean;
 }
 
-export default function AddressDisplay(props: AddressDisplayProps) {
-  return (
-    <Suspense fallback={<Skeleton className="w-32 h-7" />}>
-      <AddressView {...props} />
-    </Suspense>
-  )
-}
-
-
-async function AddressView({
+export default function AddressDisplay({
   address,
   nameTag,
   rnsName,
@@ -43,27 +28,23 @@ async function AddressView({
   useShortenedAddress = false,
   className,
   isTokenTracker,
-                             isNeedRnsName = true,
 }: AddressDisplayProps) {
-  const currRnsName = (!isNeedRnsName || hideCopyButton) ? null : await getRnsName(address);
-  if (!address || !isAddress(address)) return null
+  if (!address || !isAddress(address)) return null;
   const name = knownAddressNames[getAddress(address)]
     ? knownAddressNames[getAddress(address)]
-    : (rnsName || currRnsName)
-      ? rnsName ?? currRnsName?.name
-      : nameTag
-        ? nameTag
-        : getAddressName(address, useShortenedAddress)
+    : rnsName?.trim().length
+    ? rnsName
+    : nameTag?.trim().length
+    ? nameTag
+    : getAddressName(address, useShortenedAddress);
 
-  const isFuturepass = address?.toLowerCase()?.startsWith("0xffffffff")
+  const isFuturepass = address?.toLowerCase()?.startsWith('0xffffffff');
 
   return (
-    <div
-      className={cn(["flex items-center gap-2", className ? className : ""])}
-    >
+    <div className={cn(['flex items-center gap-2', className ? className : ''])}>
       {isContract ? (
         <Tooltip text="EVM Contract" asChild>
-          <FileText className="size-4 text-muted-foreground" />
+          <FileText className="text-muted-foreground size-4" />
         </Tooltip>
       ) : null}
       {isFuturepass ? (
@@ -72,14 +53,11 @@ async function AddressView({
         </Tooltip>
       ) : null}
       <Tooltip text={address} disabled={!useShortenedAddress} asChild>
-        <Link
-          href={`/${isTokenTracker ? "token" : "addresses"}/${address}`}
-          className="truncate"
-        >
+        <Link href={`/${isTokenTracker ? 'token' : 'addresses'}/${address}`} className="truncate">
           {name}
         </Link>
       </Tooltip>
       {!hideCopyButton || !address ? <CopyButton value={address} /> : null}
     </div>
-  )
+  );
 }
