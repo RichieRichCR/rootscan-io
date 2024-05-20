@@ -14,9 +14,9 @@ import { LocalRedisModule } from './local-redis.module';
         db: 1,
         lazyConnect: false,
         host: 'localhost',
-        port: 29012,
+        port: parseInt(process.env.REDIS_PORT || '29012'),
         username: 'default',
-        password: 'redis', //defined in the docker compose yml
+        password: 'redis', // defined in the docker compose yml
       },
     }),
 
