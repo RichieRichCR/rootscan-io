@@ -3,9 +3,20 @@ import {isAddress, isHash, isHex} from "viem";
 import {getAddressFromRnsName} from "@/lib/api";
 import { redirect } from "next/navigation";
 
-export const performSearchMainSearch = async (value: string) => {
+export const performSearchMainSearch = async (val: string) => {
   'use server'
-  if (!value) return
+  if (!val) return
+  const value = val.trim()
+  // Is RNS Name
+  let addressFrom;
+  try {
+    addressFrom = await getAddressFromRnsName(value);
+  } catch (e) {
+    console.error(e)
+  }
+  if(addressFrom) {
+    return redirect(`/addresses/${addressFrom}`)
+  }
   // Is Address
   if (isAddress(value)) {
     return redirect(`/addresses/${value}`)
@@ -26,12 +37,6 @@ export const performSearchMainSearch = async (value: string) => {
   // Is Block
   if (Number.isInteger(parseInt(value)) && !isHex(value)) {
     return redirect(`/blocks/${value}`)
-  }
-
-  // Is RNS Name
-  const addressFrom = await getAddressFromRnsName(value);
-  if(addressFrom) {
-    return redirect(`/addresses/${addressFrom}`)
   }
 
   return 'NOT_FOUND';

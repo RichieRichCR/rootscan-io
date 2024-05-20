@@ -87,7 +87,7 @@ export default async function Layout({ children, params }: { children: React.Rea
                 </CardDetail.Wrapper>
                 {rnsName && (
                   <CardDetail.Wrapper>
-                    <CardDetail.Title>RSN</CardDetail.Title>
+                    <CardDetail.Title>RNS</CardDetail.Title>
                     <CardDetail.Content>
                       <div className="flex items-center gap-2">{rnsName.name}</div>
                     </CardDetail.Content>
