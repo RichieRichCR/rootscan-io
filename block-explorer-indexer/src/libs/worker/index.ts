@@ -17,6 +17,7 @@ import { evmClient, substrateClient } from '@/rpc';
 import { Job, Worker } from 'bullmq';
 import dotenv from 'dotenv';
 import express from 'express';
+import Mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -107,6 +108,13 @@ const start = async () => {
   worker.on('failed', (job, err) => {
     logger.error(`[FAILED] ${job?.name} (ID: ${job?.id}) has failed with ${err.message}`);
   });
+
+  Mongoose.connection.on('error', (err) => {
+    server.close();
+    worker.close().then(() => {
+      process.exit(1);
+    });
+  });
 };
 
 const port = process?.env?.WORKER_HEALTH_PORT;
@@ -118,7 +126,7 @@ const app = express();
 app.get('/', (req, res) => {
   res.send('ALIVE');
 });
-app.listen(port, () => {
+const server = app.listen(port, () => {
   logger.info(`🚀 Health API at http://localhost:${port}`);
 });
 

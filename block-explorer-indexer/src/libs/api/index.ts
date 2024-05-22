@@ -13,10 +13,10 @@ import {
 } from '@/types';
 import cors from 'cors';
 import { ZeroAddress } from 'ethers';
-import express, { Next, Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import moment from 'moment';
-import { FilterQuery, PaginateOptions } from 'mongoose';
+import Mongoose, { FilterQuery, PaginateOptions } from 'mongoose';
 import { Address, Hash, formatUnits, getAddress } from 'viem';
 
 import { processError } from './utils';
@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors('*'));
 app.use(helmet());
 
-app.use((req: Request, res: Response, next: Next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.on('finish', () => {
     logger.info(`[${req.method}] ${req.originalUrl} [${JSON.stringify(req.body)}]`);
   });
@@ -1240,6 +1240,10 @@ app.get('/ready', async (req: Request, res: Response) => {
   return res.json({ ready: true });
 });
 
-app.listen(3001, () => {
+const server = app.listen(3001, () => {
   logger.info(`🚀`);
+});
+
+Mongoose.connection.on('error', (err) => {
+  server.close();
 });
