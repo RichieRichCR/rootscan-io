@@ -75,12 +75,12 @@ export default async function Layout({ children, params }: { children: React.Rea
                   <CardDetail.Content>{data?.nameTag}</CardDetail.Content>
                 </CardDetail.Wrapper>
               ) : null}
-              <div className="flex items-center gap-12">
+              <div className="flex md:items-center gap-4 md:gap-12 flex-col md:flex-row items-start">
                 <CardDetail.Wrapper>
                   <CardDetail.Title>Address</CardDetail.Title>
                   <CardDetail.Content>
                     <div className="flex items-center gap-2">
-                      <AddressDisplay address={address} className="truncate" />
+                      <AddressDisplay address={address} isTruncate />
                       <QrCode address={address} />
                     </div>
                   </CardDetail.Content>

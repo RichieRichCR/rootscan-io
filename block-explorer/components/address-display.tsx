@@ -17,6 +17,7 @@ interface AddressDisplayProps {
   useShortenedAddress?: boolean;
   className?: string;
   isTokenTracker?: boolean;
+  isTruncate?: boolean;
 }
 
 export default function AddressDisplay({
@@ -28,6 +29,7 @@ export default function AddressDisplay({
   useShortenedAddress = false,
   className,
   isTokenTracker,
+  isTruncate = false,
 }: AddressDisplayProps) {
   if (!address || !isAddress(address)) return null;
   const name = knownAddressNames[getAddress(address)]
@@ -52,11 +54,13 @@ export default function AddressDisplay({
           <Logo className="size-4" />
         </Tooltip>
       ) : null}
-      <Tooltip text={address} disabled={!useShortenedAddress} asChild>
-        <Link href={`/${isTokenTracker ? 'token' : 'addresses'}/${address}`} className="truncate">
-          {name}
-        </Link>
-      </Tooltip>
+      <div className={isTruncate ? 'max-w-[250px] md:max-w-full truncate' : ''}>
+        <Tooltip text={address} disabled={!useShortenedAddress} asChild>
+          <Link href={`/${isTokenTracker ? 'token' : 'addresses'}/${address}`} className="truncate">
+            {name}
+          </Link>
+        </Tooltip>
+      </div>
       {!hideCopyButton || !address ? <CopyButton value={address} /> : null}
     </div>
   );

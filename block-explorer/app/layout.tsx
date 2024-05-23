@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           <QueryProvider>
             <div className="relative flex min-h-screen flex-col justify-between">
               <SiteHeader />
-              <Container className="md:hidden">
+              <Container className="lg:hidden">
                 <MainSearch />
               </Container>
               {children}
