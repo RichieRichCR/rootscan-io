@@ -1,5 +1,5 @@
 import { ethereum, porcini, root } from '@/chains';
-import { ApiPromise, WsProvider } from '@polkadot/api';
+import { ApiPromise, HttpProvider, WsProvider } from '@polkadot/api';
 import { getApiOptions } from '@therootnetwork/api';
 import '@therootnetwork/api-types';
 import { PublicClient, createPublicClient, http } from 'viem';
@@ -19,10 +19,12 @@ let api;
 export const substrateClient = async (): Promise<ApiPromise> => {
   if (api) return api;
 
-  const url = process?.env?.RPC_WS_URL;
+  const url = process?.env?.RPC_PROVIDER === 'ws' ? process.env?.RPC_WS_URL : process.env?.RPC_HTTP_URL;
+  const provider = process?.env?.RPC_PROVIDER === 'ws' ? new WsProvider(url, 1000) : new HttpProvider(url);
+
   api = await ApiPromise.create({
     ...getApiOptions(),
-    provider: new WsProvider(url, 1000),
+    provider,
   });
 
   api.on('connected', () => {

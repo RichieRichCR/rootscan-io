@@ -70,15 +70,16 @@ export default class NftIndexer {
       await this.fetchHoldersOfCollection_ERC721(collection);
     }
 
+    await this.logInfo(`Finished`);
     return true;
   }
 
   async fetchHoldersOfCollection_ERC1155(collection: IToken) {
-    this.logInfo('Prepare initial data...');
+    await this.logInfo('Prepare initial data...');
     const currentChainId = await this.client.getChainId();
     const totalSupply = Number(collection.totalSupply);
     const addresses = await this.getPotentialERC1155TokenAddressesForContract(collection.contractAddress);
-    this.logInfo(`Addresses: ${addresses.length}, totalSupply: ${totalSupply}`);
+    await this.logInfo(`Addresses: ${addresses.length}, totalSupply: ${totalSupply}`);
 
     // Get current token balances
     const currentBalancesRaw = await this.DB.Nft.find({
