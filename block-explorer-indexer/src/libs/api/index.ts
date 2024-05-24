@@ -72,7 +72,7 @@ app.post('/getBlocks', async (req: Request, res: Response) => {
 
 app.post('/getEvents', async (req: Request, res: Response) => {
   try {
-    const query: { extrinsicId?: string; blockNumber?: string } = req.body;
+    const query: { extrinsicId?: string; blockNumber?: string } = req.body.query;
     const filter: FilterQuery<IEvent> = {};
 
     if (query?.extrinsicId) {
@@ -96,7 +96,7 @@ app.post('/getEvents', async (req: Request, res: Response) => {
       skipFullCount: true,
     };
 
-    if (filter.blockNumber || filter.extrinsicId) {
+    if (query?.blockNumber || query?.extrinsicId) {
       const pipeline = DB.Event.aggregate([
         {
           $match: filter,
