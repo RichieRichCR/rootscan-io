@@ -606,6 +606,14 @@ app.post('/getTokenTransfersFromAddress', async (req: Request, res: Response) =>
   }
 });
 
+// TODO: remove this function when will be fixed "transactionFee" field in DB
+function fixTransactionFee(item: IEVMTransaction | null): IEVMTransaction | null {
+  if (item && item.effectiveGasPrice) {
+    item.transactionFee = ((Number(item.effectiveGasPrice) * item.gasUsed) / 10 ** 9).toString();
+  }
+  return item;
+}
+
 app.post('/getTransaction', async (req: Request, res: Response) => {
   try {
     const { hash }: { hash: Hash } = req.body;
@@ -618,7 +626,7 @@ app.post('/getTransaction', async (req: Request, res: Response) => {
     if (data && xrpPrice?.priceData) {
       data.xrpPriceData = xrpPrice?.priceData;
     }
-    return res.json(data);
+    return res.json(fixTransactionFee(data));
   } catch (e) {
     processError(e, res);
   }
