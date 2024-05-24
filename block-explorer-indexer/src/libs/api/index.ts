@@ -21,6 +21,13 @@ import { Address, Hash, formatUnits, getAddress } from 'viem';
 
 import { processError } from './utils';
 
+function getPageAndLimit(body: Record<string, unknown>): { page: number; limit: number } {
+  return {
+    page: Number(body?.page) || 1,
+    limit: Number(body?.limit) || 25,
+  };
+}
+
 const app = express();
 
 /** @dev Middlewares */
@@ -39,8 +46,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.post('/getBlock', async (req: Request, res: Response) => {
   try {
-    const { number }: { number: number } = req.body;
-    const data = await DB.Block.findOne({ number: Number(number) }).lean();
+    const number = Number(req.body.number) || undefined;
+    const data = await DB.Block.findOne({ number }).lean();
     return res.json(data);
   } catch (e) {
     processError(e, res);
@@ -49,10 +56,8 @@ app.post('/getBlock', async (req: Request, res: Response) => {
 
 app.post('/getBlocks', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const options: PaginateOptions = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-number',
       skipFullCount: true,
       allowDiskUse: true,
@@ -67,8 +72,7 @@ app.post('/getBlocks', async (req: Request, res: Response) => {
 
 app.post('/getEvents', async (req: Request, res: Response) => {
   try {
-    const { page, limit, query }: { page: number; limit: number; query: Record<string, unknown> } = req.body;
-
+    const query: { extrinsicId?: string; blockNumber?: string } = req.body;
     const filter: FilterQuery<IEvent> = {};
 
     if (query?.extrinsicId) {
@@ -82,13 +86,12 @@ app.post('/getEvents', async (req: Request, res: Response) => {
       }
     }
 
-    if (query?.blockNumber && !isNaN(+query?.blockNumber)) {
-      filter.blockNumber = Number(query.blockNumber);
+    if (query?.blockNumber) {
+      filter.blockNumber = Number(query.blockNumber) || undefined;
     }
 
     const options: PaginateOptions = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
       skipFullCount: true,
     };
@@ -179,10 +182,9 @@ app.post('/getToken', async (req: Request, res: Response) => {
 });
 
 app.post('/getTokenHolders', async (req: Request, res: Response) => {
+  const { page, limit } = getPageAndLimit(req.body);
+  const contractAddress = getAddress(req.body.contractAddress).toString();
   try {
-    const page = req.body.page ? Number(req.body.page) : 1;
-    const contractAddress = getAddress(req.body.contractAddress).toString();
-
     const data: (IToken & { holders?: number }) | null = await DB.Token.findOne({
       contractAddress,
     }).lean();
@@ -192,7 +194,7 @@ app.post('/getTokenHolders', async (req: Request, res: Response) => {
       if (data?.type === 'ERC20') {
         const options: PaginateOptions = {
           page,
-          limit: 25,
+          limit,
           sort: '-balance',
           populate: 'tokenDetails',
           allowDiskUse: true,
@@ -202,10 +204,6 @@ app.post('/getTokenHolders', async (req: Request, res: Response) => {
 
         holders = await DB.Balance.paginate({ contractAddress }, options);
       } else if (data?.type === 'ERC721') {
-        const options = {
-          page,
-          limit: 25,
-        };
         const pipeline = DB.Nft.aggregate([
           {
             $match: {
@@ -234,12 +232,8 @@ app.post('/getTokenHolders', async (req: Request, res: Response) => {
           },
         ]);
         // @ts-expect-error aggregatePipeline does exist
-        holders = await DB.Nft.aggregatePaginate(pipeline, options);
+        holders = await DB.Nft.aggregatePaginate(pipeline, { page, limit });
       } else if (data?.type === 'ERC1155') {
-        const options = {
-          page: page ? Number(page) : 1,
-          limit: 25,
-        };
         const pipeline = DB.Nft.aggregate([
           {
             $match: {
@@ -268,7 +262,7 @@ app.post('/getTokenHolders', async (req: Request, res: Response) => {
           },
         ]);
         // @ts-expect-error aggregatePipeline does exist
-        holders = await DB.Nft.aggregatePaginate(pipeline, options);
+        holders = await DB.Nft.aggregatePaginate(pipeline, { page, limit });
       }
       if (holders) {
         holders.type = data?.type as TTokenType;
@@ -282,8 +276,8 @@ app.post('/getTokenHolders', async (req: Request, res: Response) => {
 
 app.post('/getExtrinsicsInBlock', async (req: Request, res: Response) => {
   try {
-    const { number }: { number: number } = req.body;
-    const data = await DB.Extrinsic.find({ block: Number(number) }).lean();
+    const block = Number(req.body.number) || undefined;
+    const data = await DB.Extrinsic.find({ block }).lean();
     return res.json(data);
   } catch (e) {
     processError(e, res);
@@ -292,12 +286,10 @@ app.post('/getExtrinsicsInBlock', async (req: Request, res: Response) => {
 
 app.post('/getExtrinsicsForAddress', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number; address: Address } = req.body;
     const address = getAddress(req.body.address).toString();
 
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-block',
       paginate: false,
       skipFullCount: true,
@@ -315,14 +307,11 @@ app.post('/getExtrinsicsForAddress', async (req: Request, res: Response) => {
 
 app.post('/getNftsForAddress', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
-
     const address = getAddress(req.body.address).toString();
     const contractAddress = getAddress(req.body.contractAddress).toString();
 
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       skipFullCount: true,
       allowDiskUse: true,
       sort: '-contractAddress tokenId',
@@ -337,12 +326,10 @@ app.post('/getNftsForAddress', async (req: Request, res: Response) => {
 
 app.post('/getNftCollectionsForAddress', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const address = getAddress(req.body.address).toString();
 
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
     };
 
@@ -391,10 +378,8 @@ app.post('/getNftCollectionsForAddress', async (req: Request, res: Response) => 
 
 app.post('/getTransactions', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-blockNumber',
       populate: 'fromLookup toLookup',
       skipFullCount: true,
@@ -410,17 +395,16 @@ app.post('/getTransactions', async (req: Request, res: Response) => {
 
 app.post('/getTransactionsInBlock', async (req: Request, res: Response) => {
   try {
-    const { page, limit, block }: { page: number; limit: number; block: number } = req.body;
+    const blockNumber = Number(req.body.block) || undefined;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-blockNumber',
       populate: 'fromLookup toLookup',
       allowDiskUse: true,
       skipFullCount: true,
       lean: true,
     };
-    const data = await DB.EvmTransaction.paginate({ blockNumber: block }, options);
+    const data = await DB.EvmTransaction.paginate({ blockNumber }, options);
     return res.json(data);
   } catch (e) {
     processError(e, res);
@@ -429,12 +413,10 @@ app.post('/getTransactionsInBlock', async (req: Request, res: Response) => {
 
 app.post('/getEVMTransactionsForWallet', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const address = getAddress(req.body.address).toString();
 
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-blockNumber',
       populate: 'fromLookup toLookup',
       skipFullCount: true,
@@ -452,12 +434,10 @@ app.post('/getEVMTransactionsForWallet', async (req: Request, res: Response) => 
 
 app.post('/getNativeTransfersForAddress', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const address = getAddress(req.body.address).toString();
 
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-blockNumber',
       skipFullCount: true,
       allowDiskUse: true,
@@ -501,10 +481,9 @@ app.post('/getNativeTransfersForAddress', async (req: Request, res: Response) =>
 
 app.post('/getTokens', async (req: Request, res: Response) => {
   try {
-    const { page, limit, type }: { page: number; limit: number; type?: string } = req.body;
+    const type: string = req.body.type;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
       skipFullCount: true,
       sort: 'assetId collectionId',
@@ -523,10 +502,8 @@ app.post('/getTokens', async (req: Request, res: Response) => {
 
 app.post('/getExtrinsics', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-block -timestamp',
       allowDiskUse: true,
       skipFullCount: true,
@@ -541,12 +518,10 @@ app.post('/getExtrinsics', async (req: Request, res: Response) => {
 
 app.post('/getTokenTransfersFromAddress', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const address = getAddress(req.body.address).toString();
 
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-blockNumber',
       allowDiskUse: true,
     };
@@ -668,15 +643,14 @@ app.post('/getAddress', async (req: Request, res: Response) => {
 
 app.post('/getTokenBalances', async (req: Request, res: Response) => {
   try {
-    const { page, limit, address }: { page: number; limit: number; address: Address } = req.body;
+    const address = getAddress(req.body.address);
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
       populate: 'tokenDetails',
       lean: true,
     };
-    const data = await DB.Balance.paginate({ address: getAddress(address) }, options);
+    const data = await DB.Balance.paginate({ address }, options);
 
     return res.json(data);
   } catch (e) {
@@ -686,11 +660,9 @@ app.post('/getTokenBalances', async (req: Request, res: Response) => {
 
 app.post('/getFuturepasses', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const address = getAddress(req.body.address).toString();
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
       skipFullCount: true,
       lean: true,
@@ -1000,10 +972,8 @@ app.post('/generateReport', async (req: Request, res: Response) => {
 
 app.post('/getAddresses', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
       skipFullCount: true,
       sort: '-balance.free',
@@ -1038,11 +1008,8 @@ app.post('/getAddresses', async (req: Request, res: Response) => {
 
 app.post('/getBridgeTransactions', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
-
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       populate: 'xrplProcessingOk bridgeErc20Token bridgeErc721Token',
       allowDiskUse: true,
       skipFullCount: true,
@@ -1086,10 +1053,8 @@ app.post('/getBridgeTransactions', async (req: Request, res: Response) => {
 
 app.post('/getVerifiedContracts', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       sort: '-deployedBlock',
       allowDiskUse: true,
       lean: true,
@@ -1105,10 +1070,8 @@ app.post('/getVerifiedContracts', async (req: Request, res: Response) => {
 
 app.post('/getStakingValidators', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
       sort: '-nominators',
       lean: true,
@@ -1168,10 +1131,8 @@ app.post('/getStakingValidators', async (req: Request, res: Response) => {
 
 app.post('/getDex', async (req: Request, res: Response) => {
   try {
-    const { page, limit }: { page: number; limit: number } = req.body;
     const options = {
-      page: page ? Number(page) : 1,
-      limit: limit ? limit : 25,
+      ...getPageAndLimit(req.body),
       allowDiskUse: true,
       skipFullCount: true,
       sort: '-blockNumber',
