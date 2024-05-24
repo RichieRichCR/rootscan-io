@@ -76,11 +76,11 @@ app.post('/getEvents', async (req: Request, res: Response) => {
     const filter: FilterQuery<IEvent> = {};
 
     if (query?.extrinsicId) {
-      filter.extrinsicId = query.extrinsicId;
+      filter.extrinsicId = String(query.extrinsicId);
       // if sent retroExtrinsicId (0011766360-000001-2d9a4) - get real extrinsicId from retroExtrinsicId
-      if (/^\d{10}-\d{6}-[0-9a-f]{5}$/gm.test(String(filter.extrinsicId))) {
+      if (/^\d{10}-\d{6}-[0-9a-f]{5}$/gm.test(query.extrinsicId)) {
         const extrinsic: IExtrinsic | null = await DB.Extrinsic.findOne({
-          retroExtrinsicId: String(filter.extrinsicId),
+          retroExtrinsicId: filter.extrinsicId,
         }).lean();
         filter.extrinsicId = extrinsic?.extrinsicId || filter.extrinsicId;
       }
@@ -126,10 +126,8 @@ app.post('/getEvents', async (req: Request, res: Response) => {
 
 app.post('/getEvent', async (req: Request, res: Response) => {
   try {
-    const { eventId }: { eventId: string } = req.body;
-    const data = await DB.Event.findOne({ eventId: String(eventId) })
-      .populate('token swapFromToken swapToToken nftCollection')
-      .lean();
+    const eventId = String(req.body.eventId) || undefined;
+    const data = await DB.Event.findOne({ eventId }).populate('token swapFromToken swapToToken nftCollection').lean();
     return res.json(data);
   } catch (e) {
     processError(e, res);

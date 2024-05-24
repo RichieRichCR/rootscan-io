@@ -2,6 +2,7 @@ import AddressDisplay from '@/components/address-display';
 import { CopyButton } from '@/components/copy-button';
 import { getEventComponent } from '@/components/events-components';
 import JsonViewer from '@/components/json-viewer';
+import NoData from '@/components/no-data';
 import Timestamp from '@/components/timestamp';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +19,7 @@ const getData = async ({ params }) => {
 
 export default async function Page({ params }) {
   const data = await getData({ params });
-
+  if (!data) return <NoData />;
   return (
     <Card>
       <CardHeader className="relative">

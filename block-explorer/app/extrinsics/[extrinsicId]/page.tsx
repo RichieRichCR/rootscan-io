@@ -9,6 +9,7 @@ import {
 } from '@/components/events-components';
 import ExtrinsicStatus from '@/components/extrinsic-status';
 import JsonViewer from '@/components/json-viewer';
+import NoData from '@/components/no-data';
 import Timestamp from '@/components/timestamp';
 import TokenDisplay from '@/components/token-display';
 import Tooltip from '@/components/tooltip';
@@ -30,6 +31,7 @@ const getData = async ({ params }) => {
 
 export default async function Page({ params }) {
   const data = await getData({ params });
+  if (!data) return <NoData />;
 
   const isProxy = data?.isProxy;
 
