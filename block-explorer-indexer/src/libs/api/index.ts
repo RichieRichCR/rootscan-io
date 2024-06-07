@@ -527,7 +527,7 @@ app.post('/getTokenTransfersFromAddress', async (req: Request, res: Response) =>
     const pipeline = DB.EvmTransaction.aggregate([
       {
         $match: {
-          'events.eventName': 'Transfer',
+          'events.eventName': { $in: ['Transfer', 'TransferSingle', 'TransferBatch'] },
           $or: [
             {
               'events.from': address,
@@ -547,10 +547,12 @@ app.post('/getTokenTransfersFromAddress', async (req: Request, res: Response) =>
           to: 0,
         },
       },
-      { $unwind: '$events' },
+      {
+        $unwind: '$events',
+      },
       {
         $match: {
-          'events.eventName': 'Transfer',
+          'events.eventName': { $in: ['Transfer', 'TransferSingle', 'TransferBatch'] },
           $or: [
             {
               'events.from': address,
