@@ -748,20 +748,25 @@ app.post('/generateReport', async (req: Request, res: Response) => {
           method: 'Burned',
           'args.owner': address,
         },
-        // NFT Pallet
+        // NFT, SFT Pallet
         {
           timestamp: timestampQueryExtrinsics,
-          section: 'nft',
+          section: { $in: ['nft', 'sft'] },
           method: 'Transfer',
           'args.previousOwner': address,
         },
         {
           timestamp: timestampQueryExtrinsics,
-          section: 'nft',
+          section: { $in: ['nft', 'sft'] },
           method: 'Transfer',
           'args.newOwner': address,
         },
-
+        {
+          timestamp: timestampQueryExtrinsics,
+          section: { $in: ['nft', 'sft'] },
+          method: 'Mint',
+          'args.owner': address,
+        },
         // Balances Pallet
         {
           timestamp: timestampQueryExtrinsics,
@@ -884,7 +889,7 @@ app.post('/generateReport', async (req: Request, res: Response) => {
         amount = formatUnits(BigInt(args.amount), tokenLookup.decimals);
       }
 
-      if (extrinsic.section === 'nft' && extrinsic.method === 'Transfer') {
+      if (['nft', 'sft'].includes(extrinsic.section) && extrinsic.method === 'Transfer') {
         from = args?.previousOwner;
         to = args?.newOwner;
         if (from === getAddress(address)) {
@@ -897,7 +902,19 @@ app.post('/generateReport', async (req: Request, res: Response) => {
 
         currency = tokenLookup.name;
 
-        amount = `TokenIds: ${args?.serialNumbers.join('|')}`;
+        amount = `TokenIds: ${args?.serialNumbers?.join('|') || ''}`;
+      }
+
+      if (['nft', 'sft'].includes(extrinsic.section) && extrinsic.method === 'Mint') {
+        from = '0x0000000000000000000000000000000000000000';
+        to = args?.owner;
+        type = 'mint';
+        const tokenLookup = await findAndCacheToken(args.collectionId, true);
+        if (!tokenLookup) continue;
+
+        currency = tokenLookup.name;
+
+        amount = `TokenIds: ${args?.serialNumbers?.join('|') || ''}`;
       }
 
       csv += `${date},${txHash},${type},${amount},${currency},${from},${to}\n`;
