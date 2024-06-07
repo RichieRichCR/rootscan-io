@@ -5,7 +5,7 @@ import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 const schema = new Schema<INFT, Mongoose.Model<INFT>>({
   contractAddress: { type: String },
-  tokenId: { type: Number },
+  tokenId: { type: Schema.Types.Mixed },
   owner: { type: String },
   amount: { type: Number },
   image: { type: String },
