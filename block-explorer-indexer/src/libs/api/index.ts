@@ -914,7 +914,10 @@ app.post('/generateReport', async (req: Request, res: Response) => {
 
         currency = tokenLookup.name;
 
-        amount = `TokenIds: ${args?.serialNumbers?.join('|') || ''}`;
+        amount =
+          extrinsic.section === 'nft'
+            ? `TokenIds: ${args?.start}-${args?.end}`
+            : `SerialNumbers: ${args?.serialNumbers?.join('|')}`;
       }
 
       csv += `${date},${txHash},${type},${amount},${currency},${from},${to}\n`;
