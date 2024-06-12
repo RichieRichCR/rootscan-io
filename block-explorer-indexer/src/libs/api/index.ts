@@ -797,7 +797,7 @@ app.post('/generateReport', async (req: Request, res: Response) => {
       .sort('-timestamp')
       .lean();
 
-    let csv = `Date,Tx Hash,Type,Amount,Currency,From,To\n`;
+    let csv = `Date,Tx Hash,Type,Method,Amount,Currency,From,To\n`;
 
     const findAndCacheToken = async (assetId: number, isCollectionId = false): Promise<IToken | null> => {
       if (extrinsicsTokenLookupCache[String(isCollectionId)][assetId]) {
@@ -920,7 +920,7 @@ app.post('/generateReport', async (req: Request, res: Response) => {
             : `SerialNumbers: ${args?.serialNumbers?.join('|')}`;
       }
 
-      csv += `${date},${txHash},${type},${amount},${currency},${from},${to}\n`;
+      csv += `${date},${txHash},${type},${extrinsic.method},${amount},${currency},${from},${to}\n`;
     }
 
     const timestampEvmQuery = { $gte: moment(from).valueOf(), $lte: moment(to).valueOf() };
