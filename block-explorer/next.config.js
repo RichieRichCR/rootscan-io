@@ -25,6 +25,11 @@ module.exports = {
         destination: '/addresses/:slug*',
         permanent: true,
       },
+      {
+        source: '/resources',
+        destination: '/ecosystem',
+        permanent: true,
+      },
     ];
   },
 };

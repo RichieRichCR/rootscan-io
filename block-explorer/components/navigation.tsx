@@ -20,7 +20,7 @@ const items = [
   { title: 'DEX', href: '/dex' },
   { title: 'Staking', href: '/staking' },
   { title: 'Verified Contracts', href: '/verified-contracts' },
-  { title: 'Ecosystem', href: '/resources' },
+  { title: 'Resources', href: '/resources' },
   { title: 'API', href: 'https://build.rootscan.io', newTab: true },
 ];
 
