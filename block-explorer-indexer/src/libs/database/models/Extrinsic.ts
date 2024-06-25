@@ -51,6 +51,9 @@ schema.index({ 'args.transaction.payment.address': 1 });
 schema.index({ 'args.transaction_hash': 1 });
 schema.index({ 'args.transaction_hash': 1, section: 1 });
 
+// TODO: uncomment and add index, if page address/extrinsics works slow
+// schema.index({ 'args.call.args.target': 1});
+
 /** ERC20 Peg */
 schema.index({ 'args.beneficiary': 1 });
 

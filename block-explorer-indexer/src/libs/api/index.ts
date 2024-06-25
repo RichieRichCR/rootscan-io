@@ -295,7 +295,12 @@ app.post('/getExtrinsicsForAddress', async (req: Request, res: Response) => {
       lean: true,
     };
 
-    const data = await DB.Extrinsic.paginate({ $or: [{ signer: address }, { 'args.futurepass': address }] }, options);
+    const data = await DB.Extrinsic.paginate(
+      {
+        $or: [{ signer: address }, { 'args.futurepass': address }, { 'args.call.args.target': address?.toLowerCase() }],
+      },
+      options,
+    );
 
     return res.json(data);
   } catch (e) {
