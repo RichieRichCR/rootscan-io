@@ -58,9 +58,9 @@ const start = async () => {
       case 'FIND_NFT_METADATA':
         await new NftIndexer(evmApi, api, DB, job).fetchMetadataOfToken();
         break;
-      case 'REFETCH_NFT_HOLDERS':
-        await new NftIndexer(evmApi, api, DB, job).fetchHoldersOfCollection(job.data.contractAddress);
-        break;
+      // case 'REFETCH_NFT_HOLDERS':
+      //   await new NftIndexer(evmApi, api, DB, job).fetchHoldersOfCollection(job.data.contractAddress);
+      //   break;
       case 'PROCESS_NFT_OWNERS':
         await new NftOwnersIndexer(DB, evmApi, job).run();
         break;
@@ -70,9 +70,9 @@ const start = async () => {
       case 'REFETCH_ALL_BALANCES':
         await indexer.refetchAllBalances();
         break;
-      case 'REFETCH_NFT_HOLDERS_GEN_TASKS':
-        await new NftIndexer(evmApi, api, DB, job).createNftHolderRefreshTasks();
-        break;
+      // case 'REFETCH_NFT_HOLDERS_GEN_TASKS':
+      //   await new NftIndexer(evmApi, api, DB, job).createNftHolderRefreshTasks();
+      //   break;
       case 'UPDATE_TOKEN_PRICING_DETAILS':
         await updateTokenPricingDetails();
         break;
