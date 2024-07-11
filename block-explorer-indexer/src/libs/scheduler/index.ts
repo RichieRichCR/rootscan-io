@@ -85,6 +85,18 @@ const scheduler = async () => {
   );
 
   await queue.add(
+    'PROCESS_NFT_OWNERS',
+    {},
+    {
+      jobId: 'PROCESS_NFT_OWNERS',
+      repeat: {
+        every: 60_000 * 5, // Every 5 mins
+        immediately: true,
+      },
+    },
+  );
+
+  await queue.add(
     'INGEST_KNOWN_ADDRESSES',
     {},
     {
