@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 import { FilterQuery, Models } from 'mongoose';
 import { PublicClient } from 'viem';
 
-import { eventParsers } from './parsers';
+import { C_EVENT_PARSERS } from './parsers';
 
 export class NftOwnersIndexer {
   #client: PublicClient;
@@ -141,10 +141,10 @@ export class NftOwnersIndexer {
     const nftEvents: INftOwner[][] = [];
     for (const event of data) {
       const parserName = `${event.section}${event.method}`;
-      if (!eventParsers[parserName]) {
+      if (!C_EVENT_PARSERS[parserName]) {
         throw new Error(`Parser ${parserName} not implemented`);
       }
-      const res = eventParsers[parserName].handler(event);
+      const res = C_EVENT_PARSERS[parserName].handler(event);
       nftEvents.push(res);
     }
     const nftOwners = nftEvents.filter(Boolean).flat(1);
@@ -185,7 +185,7 @@ export class NftOwnersIndexer {
             update: {
               $set: rest,
               $inc: {
-                amount: amount,
+                amount,
               },
             },
             upsert: true,
@@ -200,6 +200,7 @@ export class NftOwnersIndexer {
     // Remove tokens with amount <= 0
     await this.#db.NftOwner.deleteMany({
       amount: { $lte: 0, $ne: null },
+      type: 'ERC1155',
     });
 
     // Set nftOwnersProcessed=true to events

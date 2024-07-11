@@ -5,10 +5,12 @@ import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 const schema = new Schema<INftOwner, Mongoose.Model<INftOwner>>({
   contractAddress: { type: String },
+  collectionId: { type: Number },
   tokenId: { type: Schema.Types.Mixed },
   owner: { type: String },
   amount: { type: Number },
   blockNumber: { type: Number },
+  eventId: { type: String },
   image: { type: String },
   type: { type: String },
   animation_url: { type: String },

@@ -1,7 +1,7 @@
 import { IEvent } from '@/types';
 import { collectionIdToERC721Address, collectionIdToERC1155Address } from '@therootnetwork/evm';
 
-export const eventParsers = {
+export const C_EVENT_PARSERS = {
   nftMint: {
     handler: (event: IEvent) => {
       const { start, end, owner, collectionId } = event.args;
@@ -9,10 +9,12 @@ export const eventParsers = {
       return tokensArray.map((tokenId) => {
         return {
           contractAddress: collectionIdToERC721Address(collectionId),
-          owner,
+          collectionId,
           tokenId,
+          owner,
           type: 'ERC721',
           blockNumber: event.blockNumber,
+          eventId: event.eventId,
           timestamp: event.timestamp,
         };
       });
@@ -24,10 +26,12 @@ export const eventParsers = {
       return serialNumbers.map((tokenId) => {
         return {
           contractAddress: collectionIdToERC721Address(collectionId),
-          owner: newOwner,
+          collectionId,
           tokenId,
+          owner: newOwner,
           type: 'ERC721',
           blockNumber: event.blockNumber,
+          eventId: event.eventId,
           timestamp: event.timestamp,
         };
       });
@@ -39,10 +43,12 @@ export const eventParsers = {
       return serialNumbers.map((tokenId) => {
         return {
           contractAddress: collectionIdToERC721Address(collectionId),
-          owner,
+          collectionId,
           tokenId,
+          owner,
           type: 'ERC721',
           blockNumber: event.blockNumber,
+          eventId: event.eventId,
           timestamp: event.timestamp,
         };
       });
@@ -58,11 +64,13 @@ export const eventParsers = {
       return [
         {
           contractAddress: collectionIdToERC1155Address(collectionId),
+          collectionId,
+          tokenId,
           owner,
           amount,
-          tokenId,
           type: 'ERC1155',
           blockNumber: event.blockNumber,
+          eventId: event.eventId,
           timestamp: event.timestamp,
         },
       ];
@@ -74,11 +82,13 @@ export const eventParsers = {
       return serialNumbers.map((tokenId, index) => {
         return {
           contractAddress: collectionIdToERC1155Address(collectionId),
+          collectionId,
+          tokenId,
           owner,
           amount: balances[index] || 0,
-          tokenId,
           type: 'ERC1155',
           blockNumber: event.blockNumber,
+          eventId: event.eventId,
           timestamp: event.timestamp,
         };
       });
@@ -93,20 +103,24 @@ export const eventParsers = {
         }
         acc.push({
           contractAddress: collectionIdToERC1155Address(collectionId),
+          collectionId,
+          tokenId,
           owner,
           amount: balances[index],
-          tokenId,
           type: 'ERC1155',
           blockNumber: event.blockNumber,
+          eventId: event.eventId,
           timestamp: event.timestamp,
         });
         acc.push({
           contractAddress: collectionIdToERC721Address(collectionId),
+          collectionId,
+          tokenId,
           owner: previousOwner,
           amount: -1 * balances[index],
-          tokenId,
           type: 'ERC1155',
           blockNumber: event.blockNumber,
+          eventId: event.eventId,
           timestamp: event.timestamp,
         });
         return acc;

@@ -75,6 +75,7 @@ export interface INFT {
 }
 export interface INftOwner {
   contractAddress: string;
+  collectionId?: number;
   type: 'ERC721' | 'ERC1155';
   tokenId: number;
   amount?: number;
