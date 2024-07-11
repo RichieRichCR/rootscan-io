@@ -84,7 +84,7 @@ export class NftOwnersIndexer {
   //   return false;
   // }
 
-  async processEventsPartial(limit = 500): Promise<boolean> {
+  async processEventsPartial(limit = 200): Promise<boolean> {
     const filter: FilterQuery<IEvent> = {
       $or: [
         { section: 'nft', method: { $in: ['Mint', 'Transfer', 'BridgedMint'] } },
