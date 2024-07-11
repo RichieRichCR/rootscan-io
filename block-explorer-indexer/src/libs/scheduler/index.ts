@@ -90,6 +90,7 @@ const scheduler = async () => {
     {
       jobId: 'PROCESS_NFT_OWNERS',
       priority: 6,
+      attempts: 1,
       repeat: {
         every: 60_000 * 60, // Every 60 mins
         immediately: true,

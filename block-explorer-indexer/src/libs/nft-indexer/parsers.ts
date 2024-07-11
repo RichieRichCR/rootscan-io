@@ -23,7 +23,7 @@ export const C_EVENT_PARSERS = {
   nftTransfer: {
     handler: (event: IEvent) => {
       const { collectionId, serialNumbers, newOwner } = event.args;
-      return serialNumbers.map((tokenId) => {
+      return (serialNumbers || []).map((tokenId) => {
         return {
           contractAddress: collectionIdToERC721Address(collectionId),
           collectionId,
@@ -40,7 +40,7 @@ export const C_EVENT_PARSERS = {
   nftBridgedMint: {
     handler: (event: IEvent) => {
       const { collectionId, serialNumbers, owner } = event.args;
-      return serialNumbers.map((tokenId) => {
+      return (serialNumbers || []).map((tokenId) => {
         return {
           contractAddress: collectionIdToERC721Address(collectionId),
           collectionId,
@@ -79,7 +79,7 @@ export const C_EVENT_PARSERS = {
   sftMint: {
     handler: (event: IEvent) => {
       const { collectionId, serialNumbers, balances, owner } = event.args;
-      return serialNumbers.map((tokenId, index) => {
+      return (serialNumbers || []).map((tokenId, index) => {
         return {
           contractAddress: collectionIdToERC1155Address(collectionId),
           collectionId,
