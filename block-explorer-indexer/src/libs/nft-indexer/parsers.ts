@@ -130,7 +130,7 @@ export const C_EVENT_PARSERS = {
   },
 };
 
-export const C_EVM_TRANSACTIONS_VENT_PARSERS = {
+export const C_EVM_TRANSACTIONS_EVENT_PARSERS = {
   ERC721Transfer: {
     handler: (event) => {
       return [

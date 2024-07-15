@@ -7,7 +7,7 @@ import moment from 'moment';
 import { Models } from 'mongoose';
 import { Hash, PublicClient } from 'viem';
 
-import { C_EVENT_PARSERS, C_EVM_TRANSACTIONS_VENT_PARSERS } from './parsers';
+import { C_EVENT_PARSERS, C_EVM_TRANSACTIONS_EVENT_PARSERS } from './parsers';
 
 const C_CHUNK_SIZE = 5000;
 export class NftOwnersIndexer {
@@ -153,10 +153,10 @@ export class NftOwnersIndexer {
     const nftEvents: INftOwner[][] = [];
     for (const event of data) {
       const parserName = `${event.type}${event.eventName}`;
-      if (!C_EVM_TRANSACTIONS_VENT_PARSERS[parserName]) {
+      if (!C_EVM_TRANSACTIONS_EVENT_PARSERS[parserName]) {
         throw new Error(`Parser ${parserName} not implemented`);
       }
-      const res = C_EVM_TRANSACTIONS_VENT_PARSERS[parserName].handler(event);
+      const res = C_EVM_TRANSACTIONS_EVENT_PARSERS[parserName].handler(event);
       nftEvents.push(res);
     }
     const nftOwners = nftEvents.filter(Boolean).flat(1);
