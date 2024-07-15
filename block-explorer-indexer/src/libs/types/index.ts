@@ -12,7 +12,7 @@ export interface IEvent {
   section: string;
   doc?: string;
   args: Record<string, any>;
-  nftOwnersProcessed?: boolean;
+  _nftOwnersProcessed?: boolean;
 }
 
 export interface IExtrinsic {
@@ -87,6 +87,7 @@ export interface INftOwner {
   image?: string;
   animation_url?: string;
   attributes?: object;
+  transactionHash?: string;
 }
 
 export interface INativeBalance {
@@ -180,6 +181,7 @@ export interface IEVMTransaction {
   input?: string;
   from: Address;
   to?: Address | null;
+  _nftOwnersProcessed?: boolean;
 }
 
 export interface IBulkWriteUpdateOp<T = object> {

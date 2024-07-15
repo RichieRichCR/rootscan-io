@@ -18,7 +18,7 @@ const cache = new LRUCache<string, NftTokenMetadata[]>({
 
 export const getTokenMetadata = async (
   contractAddress: Address,
-  tokenId: number,
+  tokenId: number | string,
   network: 'root' | 'porcini',
 ): Promise<NftTokenMetadata> => {
   const key = getAddress(contractAddress);
@@ -37,7 +37,7 @@ export const getTokenMetadata = async (
     cache.set(key, JSON.parse(readData));
   }
 
-  const metadata = cache.get(key)?.find((a) => Number(a?.tokenId) === Number(tokenId));
+  const metadata = cache.get(key)?.find((a) => a?.tokenId == tokenId);
 
   return metadata || ({} as NftTokenMetadata);
 };

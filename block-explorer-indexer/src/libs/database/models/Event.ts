@@ -13,7 +13,7 @@ const schema = new Schema<IEvent, Mongoose.Model<IEvent>>({
   section: { type: String },
   doc: { type: String },
   args: { type: Object },
-  nftOwnersProcessed: { type: Boolean },
+  _nftOwnersProcessed: { type: Boolean },
 });
 
 schema.plugin(mongoosePaginate);
@@ -33,7 +33,6 @@ schema.index({ 'args.who': 1 });
 schema.index({ 'args.source': 1 });
 schema.index({ 'args.trading_path': 1 });
 schema.index({ 'args.tokenId': 1 });
-schema.index({ nftOwnersProcessed: 1 });
 
 // Bridge
 schema.index({ 'args.XrplTxHash': 1 });
