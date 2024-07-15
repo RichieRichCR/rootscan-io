@@ -9,12 +9,14 @@ const schema = new Schema<INftOwner, Mongoose.Model<INftOwner>>({
   tokenId: { type: Schema.Types.Mixed },
   owner: { type: String },
   amount: { type: Number },
+  timestamp: { type: Number },
   blockNumber: { type: Number },
   eventId: { type: String },
   image: { type: String },
   type: { type: String },
   animation_url: { type: String },
   attributes: { type: Object },
+  transactionHash: { type: String },
 });
 
 schema.index({ contractAddress: 1, tokenId: 1 });
