@@ -2,6 +2,10 @@ import { createPublicClient, defineChain, http } from "viem"
 import {addresses} from "./rootnameservice";
 export const CHAIN_ID = Number(process?.env?.CHAIN_ID)
 
+export function isRootChain(chainId: number) {
+  return ([7668, 17668].includes(Number(chainId)))
+}
+
 export const root = defineChain({
   id: 7668,
   name: "TRN - Mainnet",
