@@ -351,10 +351,6 @@ export default class NftIndexer {
     return Array.from(addresses.keys()) as string[];
   }
 
-  async fetchMetadataOfToken() {
-    return true;
-  }
-
   async createNftHolderRefreshTasks() {
     logger.info(`Creating Nft Holder refresh tasks`);
     const collections = await this.DB.Token.find({ type: { $in: ['ERC721', 'ERC1155'] } }).lean();
