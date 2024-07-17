@@ -1,3 +1,4 @@
+import logger from '@/logger';
 import { BulkJobOptions } from 'bullmq';
 
 import queue from './index';
@@ -35,7 +36,7 @@ export class TaskQueueLimiter<T> {
       return;
     }
     const tasks = this.#queue.splice(0, nextCount);
-    console.log(`Add jobs for ${tasks[0]} to ${tasks[tasks.length - 1]}`);
+    logger.info(`Add jobs for ${tasks[0]} to ${tasks[tasks.length - 1]}`);
     queue.addBulk(tasks.map((i) => this.prepare(i)));
   }
 
