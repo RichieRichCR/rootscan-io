@@ -162,7 +162,7 @@ export async function getMissingBlocks(): Promise<number[]> {
         },
       },
       {
-        $limit: 100_000,
+        $limit: 10_000,
       },
       {
         $group: {
