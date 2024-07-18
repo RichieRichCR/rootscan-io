@@ -37,7 +37,7 @@ export const root = defineChain({
       url: 'https://subgraph.rootnameservice.com/subgraphs/name/graphprotocol/rns/graphql',
     },
   },
-  blockExplorerUrls: ["https://rootscan.io"],
+  blockExplorerUrls: ["https://rootscan.io/"],
 })
 
 export const porcini = defineChain({
