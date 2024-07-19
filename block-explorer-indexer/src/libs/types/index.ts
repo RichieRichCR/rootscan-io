@@ -12,7 +12,7 @@ export interface IEvent {
   section: string;
   doc?: string;
   args: Record<string, any>;
-  nftOwnersProcessed?: boolean;
+  _nftOwnersProcessed?: boolean;
 }
 
 export interface IExtrinsic {
@@ -87,6 +87,7 @@ export interface INftOwner {
   image?: string;
   animation_url?: string;
   attributes?: object;
+  transactionHash?: string;
 }
 
 export interface INativeBalance {
@@ -94,10 +95,13 @@ export interface INativeBalance {
   freeFormatted: string;
   reserved: number;
   reservedFormatted: string;
-  miscFrozen: number;
-  miscFrozenFormatted: string;
-  feeFrozen: number;
-  feeFrozenFormatted: string;
+  frozen?: number;
+  frozenFormatted?: string | null;
+  // parameters bottom are deprecated with new substrate version 1.0
+  miscFrozen?: number;
+  miscFrozenFormatted?: string | null;
+  feeFrozen?: number;
+  feeFrozenFormatted?: string | null;
 }
 
 export interface IAddress {
@@ -180,6 +184,7 @@ export interface IEVMTransaction {
   input?: string;
   from: Address;
   to?: Address | null;
+  _nftOwnersProcessed?: boolean;
 }
 
 export interface IBulkWriteUpdateOp<T = object> {

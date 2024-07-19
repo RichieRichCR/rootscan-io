@@ -1,5 +1,6 @@
 import { IEvent } from '@/types';
 import { collectionIdToERC721Address, collectionIdToERC1155Address } from '@therootnetwork/evm';
+import { ZeroAddress } from 'ethers';
 
 export const C_EVENT_PARSERS = {
   nftMint: {
@@ -125,6 +126,80 @@ export const C_EVENT_PARSERS = {
         });
         return acc;
       }, []);
+    },
+  },
+};
+
+export const C_EVM_TRANSACTIONS_EVENT_PARSERS = {
+  ERC721Transfer: {
+    handler: (event) => {
+      return [
+        {
+          contractAddress: event.address,
+          tokenId: event.tokenId,
+          owner: event.to,
+          type: event.type,
+          blockNumber: event.blockNumber,
+          transactionHash: event.hash,
+          timestamp: event.timestamp / 1000,
+        },
+      ];
+    },
+  },
+  ERC1155TransferSingle: {
+    handler: (event) => {
+      return [
+        {
+          contractAddress: event.address,
+          tokenId: event.id,
+          amount: event.value,
+          owner: event.to,
+          type: event.type,
+          blockNumber: event.blockNumber,
+          transactionHash: event.hash,
+          timestamp: event.timestamp / 1000,
+        },
+        {
+          contractAddress: event.address,
+          tokenId: event.id,
+          amount: -1 * event.value,
+          owner: event.from,
+          type: event.type,
+          blockNumber: event.blockNumber,
+          transactionHash: event.hash,
+          timestamp: event.timestamp / 1000,
+        },
+      ].filter((i) => i.amount && i.owner !== ZeroAddress);
+    },
+  },
+  ERC1155TransferBatch: {
+    handler: (event) => {
+      return event.ids
+        ?.map((id, index) => {
+          return [
+            {
+              contractAddress: event.address,
+              tokenId: id,
+              amount: event.values[index],
+              owner: event.to,
+              type: event.type,
+              blockNumber: event.blockNumber,
+              transactionHash: event.hash,
+              timestamp: event.timestamp / 1000,
+            },
+            {
+              contractAddress: event.address,
+              tokenId: id,
+              amount: -1 * event.values[index],
+              owner: event.from,
+              type: event.type,
+              blockNumber: event.blockNumber,
+              transactionHash: event.hash,
+              timestamp: event.timestamp / 1000,
+            },
+          ].filter((i) => i.amount && i.owner !== ZeroAddress);
+        })
+        .flat(1);
     },
   },
 };

@@ -1,5 +1,6 @@
 import ABIs from '@/constants/abi';
 import { calculateTransactionFee, getEVMTransaction, parseEventsFromEvmTx } from '@/evm-parser';
+import { NftOwnersIndexer } from '@/nft-indexer/nft-owners-indexer';
 import { evmClient } from '@/rpc';
 import {
   IAddress,
@@ -303,7 +304,7 @@ export default class Indexer {
     /** @dev - Parse all events in this block */
     let eventIndex = 0;
     const parsedEvents: IEvent[] = [];
-    const eventsOps: IBulkWriteUpdateOp[] = [];
+    const eventsOps: IBulkWriteUpdateOp<IEvent>[] = [];
     for (const record of chainEvents) {
       // extract the phase, event and the event types
       const { event, phase } = record;
@@ -386,6 +387,9 @@ export default class Indexer {
 
     if (eventsOps?.length) {
       await this.DB.Event.bulkWrite(eventsOps);
+      // process nft owners from events
+      const nftOwnersIndexer = new NftOwnersIndexer(this.DB, evmClient);
+      await nftOwnersIndexer.processEvents(eventsOps.map((i) => i.updateOne.filter.eventId as string));
     }
 
     const substrateBlockHuman = substrateBlock.toHuman() as {
@@ -686,6 +690,9 @@ export default class Indexer {
       await refetchBalancesForAddressesInObject(finalTransaction);
     }
 
+    // process nft owners from transactions
+    const nftOwnersIndexer = new NftOwnersIndexer(this.DB, evmClient);
+    await nftOwnersIndexer.processEvmTransactions(hashes);
     return true;
   }
 
@@ -694,16 +701,27 @@ export default class Indexer {
     const account = await this.api.query.system.account(address);
     const nativeBalancePrimitive = account?.data?.toPrimitive();
     // Root Native Balance
+
+    // TODO: in trn-seed with new substrate need to modify logic for frozen parameter
+    // https://github.com/futureversecom/trn-seed/issues/860
     const nativeDecimals = 6;
     const nativeBalance: INativeBalance = {
       free: nativeBalancePrimitive?.free as number,
       freeFormatted: formatUnits(String(nativeBalancePrimitive?.free), nativeDecimals),
       reserved: nativeBalancePrimitive?.reserved as number,
       reservedFormatted: formatUnits(String(nativeBalancePrimitive?.reserved), nativeDecimals),
+      frozen: nativeBalancePrimitive?.frozen as number,
+      frozenFormatted: nativeBalancePrimitive?.frozen
+        ? formatUnits(String(nativeBalancePrimitive?.frozen), nativeDecimals)
+        : null,
       miscFrozen: nativeBalancePrimitive?.miscFrozen as number,
-      miscFrozenFormatted: formatUnits(String(nativeBalancePrimitive?.miscFrozen), nativeDecimals),
+      miscFrozenFormatted: nativeBalancePrimitive?.miscFrozen
+        ? formatUnits(String(nativeBalancePrimitive?.miscFrozen), nativeDecimals)
+        : null,
       feeFrozen: nativeBalancePrimitive?.feeFrozen as number,
-      feeFrozenFormatted: formatUnits(String(nativeBalancePrimitive?.feeFrozen), nativeDecimals),
+      feeFrozenFormatted: nativeBalancePrimitive?.feeFrozen
+        ? formatUnits(String(nativeBalancePrimitive?.feeFrozen), nativeDecimals)
+        : null,
     };
 
     await this.DB.Address.updateOne(
